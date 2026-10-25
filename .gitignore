@@ -1,0 +1,32 @@
+# Personal files from older versions, which kept them next to the program.
+# (Newer versions keep them in %APPDATA%\MapleEXP instead.)
+/config.json
+/exp_log.json
+/exp_log.txt
+/mesos_digits.npz
+*.tmp
+
+# Build output (made by build.py), including the copy to use in the project folder
+/build/
+/release/
+/Maple Classic Exp Overlay.exe
+/_internal/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+/errors.log
+/errors.old.log
+
+# Server (Cloudflare Pages)
+node_modules/
+.wrangler/
+.dev.vars
+
+# Local verification harnesses and run output
+/verification/

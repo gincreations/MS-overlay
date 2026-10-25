@@ -1,0 +1,10 @@
+{
+  "upstream": "guddevbaddev/Maple-Classic-Exp-Overlay",
+  "commit": "9369cfbe732fbb01ac24c8f12342b23f60c46a28",
+  "source_sha256": "962b7cd24362d9086bfa7b98beeca437e03661dc295f6df35be562f677290a77",
+  "class_AST_sha256": {
+    "ExpTracker": "8d09aa19bc79379478d33ef76e7e645489e9a41ae80f9f4ad9090423fe37398d",
+    "MesoTracker": "4bb5d324ad58400f9d3c6a3a44842dfea5427c444227ebc427acd97ec87b2d10",
+    "Session": "650edbb0ccbcf26148a77fb98f371ef568fbde6b91d7fe1f7c54ecc832f6fb89"
+  }
+}

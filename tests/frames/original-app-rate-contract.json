@@ -1,0 +1,13 @@
+{
+  "baseline": "0.1.8 exact rate display; 0.1.13 pre-change private capture lifecycle",
+  "methods": {
+    "_worker": "f8e75f726a14a8e79eead5786f693b1d87f9bd3e4711f50007626dbef29a3fa9",
+    "_pump": "1cef1d6a860097816f9cba727cd3a137b3055459bc7235a66ab82989dbbcfbce",
+    "_handle": "256d459f7ee93c0104ed456dbbf008ba47b1254c44753bc0fc637fc008b4bd6e",
+    "_status_for": "61f9ea820e3efcc5c07f8f8e15e7d032b214b7be904e65672c2fbeac332ff3a4",
+    "_state": "a6c2e640f6f182051262eea34c06c94d8a07d168cd9563fdd220de2d2edb54e1",
+    "_update_display": "c9a63c1b98083c7ed7c9a3f1cc2f0b243b98d17f6de4c46f450dd57fbd0bacd9",
+    "toggle": "70922955676b87845723aa227a1a908e8166f1b9384607dd3fd05e7de41832c1",
+    "reset": "f6696dffbb925bb8616c9c5f5c517fd1e5a6ba2af8567abf8ce320fc2fb2ecff"
+  }
+}

@@ -1,0 +1,233 @@
+[
+  {
+    "id": 2000000,
+    "name": "Red Potion",
+    "file": "2000000.png",
+    "origin": [
+      -3,
+      30
+    ],
+    "npc_price": 50,
+    "npc_note": "Arturo (Perion); standard shop price."
+  },
+  {
+    "id": 2000001,
+    "name": "Orange Potion",
+    "file": "2000001.png",
+    "origin": [
+      -3,
+      30
+    ],
+    "npc_price": 150,
+    "npc_note": "Arturo (Perion); standard shop price."
+  },
+  {
+    "id": 2000002,
+    "name": "White Potion",
+    "file": "2000002.png",
+    "origin": [
+      -3,
+      30
+    ],
+    "npc_price": 350,
+    "npc_note": "Arturo (Perion); standard shop price."
+  },
+  {
+    "id": 2000003,
+    "name": "Blue Potion",
+    "file": "2000003.png",
+    "origin": [
+      -3,
+      30
+    ],
+    "npc_price": 220,
+    "npc_note": "Arturo (Perion); standard shop price."
+  },
+  {
+    "id": 2000004,
+    "name": "Elixir",
+    "file": "2000004.png",
+    "origin": [
+      0,
+      32
+    ],
+    "npc_price": 3000,
+    "npc_note": "Raymond / Max: Citizen of Honor; 100 per user, no refill."
+  },
+  {
+    "id": 2000005,
+    "name": "Power Elixir",
+    "file": "2000005.png",
+    "origin": [
+      0,
+      32
+    ],
+    "npc_price": null,
+    "npc_note": "No NPC seller recorded; enter paid or average unit price."
+  },
+  {
+    "id": 2000006,
+    "name": "Mana Elixir",
+    "file": "2000006.png",
+    "origin": [
+      0,
+      32
+    ],
+    "npc_price": null,
+    "npc_note": "No NPC seller recorded; enter paid or average unit price."
+  },
+  {
+    "id": 2001000,
+    "name": "Watermelon",
+    "file": "2001000.png",
+    "origin": [
+      -4,
+      28
+    ],
+    "npc_price": null,
+    "npc_note": "No NPC seller recorded; enter paid or average unit price."
+  },
+  {
+    "id": 2001001,
+    "name": "Ice Cream Pop",
+    "file": "2001001.png",
+    "origin": [
+      0,
+      32
+    ],
+    "npc_price": null,
+    "npc_note": "No NPC seller recorded; enter paid or average unit price."
+  },
+  {
+    "id": 2010000,
+    "name": "Apple",
+    "file": "2010000.png",
+    "origin": [
+      -4,
+      30
+    ],
+    "npc_price": 20,
+    "npc_note": "Arturo (Perion): 20; sauna shop: 30."
+  },
+  {
+    "id": 2010002,
+    "name": "Egg",
+    "file": "2010002.png",
+    "origin": [
+      -3,
+      25
+    ],
+    "npc_price": 30,
+    "npc_note": "Arturo (Perion); standard shop price."
+  },
+  {
+    "id": 2010003,
+    "name": "Orange",
+    "file": "2010003.png",
+    "origin": [
+      -3,
+      25
+    ],
+    "npc_price": 50,
+    "npc_note": "Arturo (Perion); standard shop price."
+  },
+  {
+    "id": 2010004,
+    "name": "Lemon",
+    "file": "2010004.png",
+    "origin": [
+      -4,
+      26
+    ],
+    "npc_price": 150,
+    "npc_note": "Arturo (Perion); standard shop price."
+  },
+  {
+    "id": 2020004,
+    "name": "Hamburger",
+    "file": "2020004.png",
+    "origin": [
+      -4,
+      26
+    ],
+    "npc_price": 350,
+    "npc_note": "24 Hr Mobile Store (Ant Tunnel Park)."
+  },
+  {
+    "id": 2020005,
+    "name": "Hot Dog",
+    "file": "2020005.png",
+    "origin": [
+      -4,
+      26
+    ],
+    "npc_price": 180,
+    "npc_note": "24 Hr Mobile Store (Ant Tunnel Park)."
+  },
+  {
+    "id": 2020009,
+    "name": "Orange Juice",
+    "file": "2020009.png",
+    "origin": [
+      -4,
+      32
+    ],
+    "npc_price": 540,
+    "npc_note": "Raymond / Max: Trusted Neighbor or higher."
+  },
+  {
+    "id": 2020010,
+    "name": "Grape Juice",
+    "file": "2020010.png",
+    "origin": [
+      -4,
+      32
+    ],
+    "npc_price": 1260,
+    "npc_note": "Raymond / Max: Guardian of the Village or higher."
+  },
+  {
+    "id": 2020013,
+    "name": "Reindeer Milk",
+    "file": "2020013.png",
+    "origin": [
+      -2,
+      28
+    ],
+    "npc_price": null,
+    "npc_note": "No NPC seller recorded; enter paid or average unit price."
+  },
+  {
+    "id": 2020014,
+    "name": "Sunrise Dew",
+    "file": "2020014.png",
+    "origin": [
+      -3,
+      31
+    ],
+    "npc_price": null,
+    "npc_note": "No NPC seller recorded; enter paid or average unit price."
+  },
+  {
+    "id": 2022000,
+    "name": "Pure Water",
+    "file": "2022000.png",
+    "origin": [
+      -4,
+      32
+    ],
+    "npc_price": 1120,
+    "npc_note": "24 Hr Mobile Store / Mr. Sweatbottom."
+  },
+  {
+    "id": 2022003,
+    "name": "Unagi",
+    "file": "2022003.png",
+    "origin": [
+      -1,
+      22
+    ],
+    "npc_price": 1000,
+    "npc_note": "Ant Tunnel Park: 1,000; sauna shop: 1,800."
+  }
+]

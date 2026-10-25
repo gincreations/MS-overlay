@@ -1,0 +1,5 @@
+# Python >=3.11 required; native release uses Python3.13.17
+mss==10.1.0
+numpy==2.2.6
+opencv-python-headless==4.12.0.88
+pillow==13.0.0
