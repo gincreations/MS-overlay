@@ -6,17 +6,9 @@ A local, screen-reading tracker for **MapleStory Classic World**. It shows your 
 
 [Download the Windows portable ZIP](https://github.com/gincreations/maple-classic-overlay/releases/download/v0.1.18-rc3/Maple-Private-Overlay-0.1.18-rc3-portable.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
 
-## Candidate status
+## Release status
 
-**RC3 replaces the held RC2 candidate.** Use only a published RC3 release whose evidence confirms the required checks passed. Source changes alone are not a validated download. [Release and exact results](https://github.com/gincreations/maple-classic-overlay/releases/tag/v0.1.18-rc3).
-
-RC3 includes the absolute-Windows-path Explorer helper fix and replaces the legacy OCR DLL tree with a minimal static Windows build: Tesseract 5.5.3 plus pinned upstream security fixes, Leptonica 1.87.0, libpng 1.6.59 and a patched zlib 1.3.2.1 development revision. Source commits and download hashes are pinned in tools/ocr-sources.json; the English model is unchanged. External codecs are limited to PNG/zlib. Curl, libarchive, TLS libraries and ScrollView are not bundled with OCR.
-
-Release gates require original-calculation regression checks, exact embedded-source comparison, enabled realtime Defender scans, packaged setup and real OCR crop checks. Native and Python advisory queries have explicitly limited coverage. The release evidence states which gates actually passed; no pending check is a clean result.
-
-**RC2 remains on hold; RC1 and 0.1.17 are superseded.** The old 0.1.17 Defender detection remains unresolved. No scan or rebuild is an absolute malware guarantee. Do not disable antivirus, restore quarantined files or add exclusions. This build is unsigned; reputation warnings and future antivirus classifications cannot be guaranteed away.
-
-No updater, telemetry or internet access has been added to the app. It remains Windows-only. [Security results and limits](docs/SECURITY.md) distinguish the previously tested runtime from this documentation-only redistribution.
+**0.1.18 RC3 — Windows prerelease.** [Release notes](https://github.com/gincreations/maple-classic-overlay/releases/tag/v0.1.18-rc3) · [Security details](docs/SECURITY.md)
 
 ## New in this candidate
 
