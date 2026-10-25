@@ -10,7 +10,7 @@ import re
 import shutil
 import subprocess
 
-REPO = os.environ.get('GITHUB_REPOSITORY', 'gincreations/maple-classic-overlay')
+REPO = os.environ.get('GITHUB_REPOSITORY', 'gincreations/MS-overlay')
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'verification/windows-review'
 

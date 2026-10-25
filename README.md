@@ -1,14 +1,14 @@
-# Maple Classic Overlay — 0.1.18 RC3
+# MS Overlay — 0.1.18 RC3
 
 A local, screen-reading tracker for **MapleStory Classic World**. It shows your farming progress without reading game memory or automating game inputs.
 
 ## Download
 
-[Download the Windows portable ZIP](https://github.com/gincreations/maple-classic-overlay/releases/download/v0.1.18-rc3/MS.overlay.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
+[Download the Windows portable ZIP](https://github.com/gincreations/MS-overlay/releases/download/v0.1.18-rc3/Maple-Private-Overlay-0.1.18-rc3-portable.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
 
 ## Release status
 
-**0.1.18 RC3 — Windows prerelease.** [Release notes](https://github.com/gincreations/maple-classic-overlay/releases/tag/v0.1.18-rc3) · [Security details](docs/SECURITY.md)
+**0.1.18 RC3 — Windows prerelease.** [Release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.18-rc3) · [Security details](docs/SECURITY.md)
 
 ## New in this candidate
 
