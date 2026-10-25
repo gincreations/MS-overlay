@@ -4,7 +4,7 @@ A local, screen-reading tracker for **MapleStory Classic World**. It shows your 
 
 ## Download
 
-[Download the Windows portable ZIP](https://github.com/gincreations/maple-classic-overlay/releases/download/v0.1.18-rc3/Maple-Private-Overlay-0.1.18-rc3-portable.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
+[Download the Windows portable ZIP](https://github.com/gincreations/maple-classic-overlay/releases/download/v0.1.18-rc3/MS.overlay.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
 
 ## Release status
 
