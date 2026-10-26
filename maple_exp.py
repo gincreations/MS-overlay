@@ -77,7 +77,7 @@ cv2.setNumThreads(1)
 # Use OpenCV's standard implementation; recognition thresholds are unchanged.
 cv2.ipp.setUseIPP(False)
 
-VERSION = "0.1.20-rc2"
+VERSION = "0.1.20-rc3"
 WINDOW_TITLE = "Maple Private Overlay"    # the version is shown in Settings
 OLD_TITLES = ()               # what versions before 0.9.3 were called
 

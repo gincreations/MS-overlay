@@ -150,7 +150,7 @@ def _game_name(value):
     return re.sub(r"[\s_-]+", "", value)
 
 
-_NATIVE_GAMES = {"maplestory", "maplestoryclassic", "maplestoryclassicplayer",
+_NATIVE_GAMES = {"maplestory", "maplestoryclassic", "maplestoryclassicworld", "maplestoryclassicplayer",
                  "maplestoryclassicclient", "maplestoryworlds", "maplestoryworldsplayer",
                  "maplestoryworldsclient"}
 

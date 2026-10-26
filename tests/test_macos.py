@@ -31,6 +31,13 @@ class MacCaptureTests(unittest.TestCase):
                 self.assertEqual(self.platform.find_game_window(),101)
                 self.assertTrue(self.platform.capture_allowed(101))
 
+    def test_native_classic_world_reported_process(self):
+        # Reported native process name, distinct from the MapleStory window title.
+        self.windows.return_value=[self.game._replace(owner='Maplestory Classic World',title='MapleStory')]
+        with patch.object(m,'native_game_process',return_value=False):
+            self.assertEqual(self.platform.find_game_window(),101)
+            self.assertTrue(self.platform.capture_allowed(101))
+
     def test_native_executable_fallback(self):
         self.windows.return_value=[self.game._replace(owner='Localized game label')]
         with patch.object(m,'native_game_process',return_value=True):
