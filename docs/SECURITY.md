@@ -2,9 +2,15 @@
 
 ## Combined download release
 
-The combined 0.1.20 RC3 release labels both downloads **0.1.20 RC3**. It includes an updated Mac test build and the unchanged Windows 0.1.19 RC2 runtime. Windows has not been rebuilt just to match the shared download version.
+The combined 0.1.20 RC4 release labels both downloads **0.1.20 RC4**. It includes an updated Mac test build and the unchanged Windows 0.1.19 RC2 runtime. Windows has not been rebuilt just to match the shared download version.
 
-### Mac 0.1.20 RC3 — confirmed native client name
+### Mac 0.1.20 RC4 — focused-game window layer correction
+
+The affected client reports window layer **26** while focused and layer **0** while inactive. RC3 incorrectly rejected layer 26 during game discovery and required layer 0 for foreground capture. RC4 accepts this observed game layer and selects the front game window consistently. Exact process identity, Screen Recording permission, foreground ownership, minimum size, visibility, bounded crops, and the before/after focus checks remain required. No launcher, generic Wine loader, browser, VM desktop, or arbitrary title is newly allowed.
+
+Regression cases reproduce the previous failure and cover repeated 0/26 transitions, same-process window ordering, focus loss during capture, denied permission, hidden windows, unrecognized owners, and unsupported layers. The status pill now retains blocked/error state until a real reading arrives. The user report is not included in the public source; only sanitized shapes are used in tests. The exact package checks and their limits are attached as `VERIFICATION.json`. Windows bytes are unchanged; real gameplay on the affected Mac still requires user confirmation.
+
+### Previous Mac 0.1.20 RC3 — confirmed native client name
 
 The reported process is **Maplestory Classic World**, with window title **MapleStory**. RC2 rejected this identity in a reproduced regression case. RC3 adds this exact native process name; the new regression and all 34 Mac-specific tests pass. Existing foreground-only capture checks and Mission Control behavior remain intact. Windows bytes are unchanged. Full release verification is attached as `VERIFICATION.json`; actual gameplay on the affected Mac still needs user confirmation.
 

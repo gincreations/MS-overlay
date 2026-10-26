@@ -23,6 +23,49 @@ class Screen:
         return "pixels"
 
 class PrivacyTests(unittest.TestCase):
+    def test_blocked_capture_badge_recovers_only_after_a_reading(self):
+        # Exercise the actual worker-message pump without a UI or screen capture.
+        app=m.App.__new__(m.App)
+        app.q=m.queue.Queue()
+        app.stop_evt=m.threading.Event(); app.stop_evt.set()
+        app.reader=SimpleNamespace(mode="window", hwnd=101, job_look=None, map_look=None)
+        app.tracker=SimpleNamespace(req=None)
+        app.session=SimpleNamespace()
+        app.rejected=0
+        app.potion_usage=[]
+        app.capture_blocked_reason=None
+        app._handle=lambda reading: None
+        app._hotkey=lambda action: None
+        app.recent=SimpleNamespace(add=lambda message: None)
+        app.status=SimpleNamespace(set=lambda message: None)
+        app._oops=lambda *args: self.fail(str(args))
+        cases=[
+            ("Privacy pause: click inside MapleStory to resume", ("paused", "Game not in front")),
+            ("Privacy pause: restore the minimized game window", ("paused", "Capture paused")),
+            ("Game not found: open a supported standalone MapleStory game window", ("waiting", "Looking for the game")),
+            ("Can't see other windows. Allow this app in Screen Recording, then restart it.", ("alert", "Screen Recording needed")),
+        ]
+        for reason, expected in cases:
+            with self.subTest(reason=reason):
+                app.last_capture=app.last_mesos=object()
+                app.q.put(("privacy_pause", reason))
+                app._pump()
+                self.assertEqual(app._state(), expected)
+                self.assertIsNone(app.last_capture)
+                self.assertIsNone(app.last_mesos)
+                app.q.put(("hotkey", "pause"))
+                app._pump()
+                self.assertEqual(app._state(), expected)
+                app.q.put(("reading", m.Reading("Searching the game for EXP")))
+                app._pump()
+                self.assertEqual(app._state(), ("waiting", "Reading your EXP bar"))
+        app.q.put(("error", "OCR worker failed"))
+        app._pump()
+        self.assertEqual(app._state(), ("alert", "Screen read failed"))
+        app.q.put(("reading", m.Reading("Searching the game for EXP")))
+        app._pump()
+        self.assertEqual(app._state(), ("waiting", "Reading your EXP bar"))
+
     def test_foreground_required_before_read(self):
         screen = Screen()
         cap = GameCapture(screen, lambda: (10,20,300,200), lambda: False)

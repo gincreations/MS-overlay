@@ -77,7 +77,7 @@ cv2.setNumThreads(1)
 # Use OpenCV's standard implementation; recognition thresholds are unchanged.
 cv2.ipp.setUseIPP(False)
 
-VERSION = "0.1.20-rc3"
+VERSION = "0.1.20-rc4"
 WINDOW_TITLE = "Maple Private Overlay"    # the version is shown in Settings
 OLD_TITLES = ()               # what versions before 0.9.3 were called
 
@@ -2656,6 +2656,7 @@ class App:
         self.party = 1
         self._party_seen = (None, 0)
         self.last_mesos = None
+        self.capture_blocked_reason = None
         self.rejected = 0
         self.started, self.cpu0 = time.monotonic(), time.process_time()
         self.recent, self.health = Recent(40, self.started, sink=DIAGNOSTICS.activity), Health()      # for bug reports
@@ -3926,10 +3927,12 @@ class App:
                 elif kind == "potion_counts":
                     self._potion_counts(*payload)
                 elif kind == "error":
+                    self.capture_blocked_reason = "Screen read failed"
                     self.recent.add(f"Error reading the screen: {payload}")
                     self.status.set("Something went wrong reading the screen. Trying again... "
                                     "(details are in errors.log: Settings > Open data folder)")
                 elif kind == "privacy_pause":
+                    self.capture_blocked_reason = payload
                     self.potion_after = time.monotonic()
                     for usage in self.potion_usage:
                         usage.gap("Paused / game not in front")
@@ -3939,6 +3942,8 @@ class App:
                 elif kind == "hotkey":
                     self._hotkey(payload)
                 else:
+                    if kind == "reading":
+                        self.capture_blocked_reason = None
                     self._handle(payload)
         except queue.Empty:
             pass
@@ -4058,6 +4063,19 @@ class App:
     def _state(self):
         """A word for the status pill: where things stand."""
         t, sess = self.tracker, self.session
+        # A selected handle is not evidence that capture succeeded. Keep the
+        # last worker failure visible until an actual reading replaces it.
+        blocked = getattr(self, "capture_blocked_reason", None)
+        if blocked:
+            if "Screen Recording" in blocked:
+                return "alert", "Screen Recording needed"
+            if blocked.startswith("Game not found:"):
+                return "waiting", "Looking for the game"
+            if blocked == "Screen read failed":
+                return "alert", "Screen read failed"
+            if blocked == "Privacy pause: click inside MapleStory to resume":
+                return "paused", "Game not in front"
+            return "paused", "Capture paused"
         if self.reader.mode == "window" and not self.reader.hwnd:
             return "waiting", "Looking for the game"
         if self.rejected >= 5:

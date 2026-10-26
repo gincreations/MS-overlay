@@ -44,6 +44,7 @@ _CFRelease = _api(_cf.CFRelease, None, _vp)
 _KEYS = {k: _vp.in_dll(_cg, "kCGWindow" + k).value
          for k in ("Number", "OwnerPID", "OwnerName", "Name", "Layer", "Bounds", "IsOnscreen")}
 _ON_SCREEN, _ONLY_THIS, _NO_DESKTOP = 1, 8, 16          # kCGWindowListOption...
+_RAISED_GAME_LAYER = 26  # Classic World uses this level while focused (normal layer 0 when inactive).
 _TOPMOST = 19                                           # the window layer of Always on top (tkinter's -topmost)
 
 MacWindow = namedtuple("MacWindow", "number pid owner title layer rect onscreen")
@@ -179,7 +180,7 @@ def native_game_process(pid):
 
 def is_game(w, own_pid):
     """Recognize native Classic/Worlds identities and narrowly named Wine games."""
-    if not 0 <= w.layer <= _TOPMOST or w.pid == own_pid or not w.rect or w.owner.casefold() in _NOT_GAME:
+    if not (0 <= w.layer <= _TOPMOST or w.layer == _RAISED_GAME_LAYER) or w.pid == own_pid or not w.rect or w.owner.casefold() in _NOT_GAME:
         return False
     owner = _game_name(w.owner)
     title = _game_name(w.title)
@@ -257,9 +258,10 @@ class MacPlatform(Platform):
                 return False
             pid = frontmost_pid()
             windows = window_list()
-            # Ignore overlay panels, but not other normal windows belonging to the game.
+            # Classic World raises its game window to layer 26 while active.
+            # Match front-to-back order at both game levels, not a stale layer-0 window.
             front = next((w for w in windows if w.pid == pid and w.onscreen
-                          and w.layer == 0 and w.rect), None)
+                          and w.layer in (0, _RAISED_GAME_LAYER) and w.rect), None)
             if not front or front.number != number or not is_game(front, os.getpid()):
                 return False
             return bool(front.rect[2] >= 100 and front.rect[3] >= 100
@@ -270,10 +272,10 @@ class MacPlatform(Platform):
     def find_game_window(self):
         windows = window_list()
         pid = frontmost_pid()
-        # Match the same front normal window capture_allowed uses. A large
+        # Match the same front game-level window capture_allowed uses. A large
         # background client/launcher must not beat the foreground game window.
         front = next((w for w in windows if w.pid == pid and w.onscreen
-                      and w.layer == 0 and w.rect), None)
+                      and w.layer in (0, _RAISED_GAME_LAYER) and w.rect), None)
         if front and is_game(front, os.getpid()) and min(front.rect[2:]) >= 100:
             return front.number
         found = [(w.rect[2] * w.rect[3], w.number) for w in windows

@@ -38,6 +38,57 @@ class MacCaptureTests(unittest.TestCase):
             self.assertEqual(self.platform.find_game_window(),101)
             self.assertTrue(self.platform.capture_allowed(101))
 
+    def test_classic_world_focus_layer_transition(self):
+        # Sanitized shape of the owner's diagnostic: same game/window moves
+        # from normal layer 0 to layer 26 when focused. Titles may be absent.
+        game=self.game._replace(owner='MapleStory Classic World',title='',rect=(0,0,1366,796))
+        for layer, focused in ((0,False),(26,True),(0,False),(26,True)):
+            with self.subTest(layer=layer,focused=focused):
+                self.windows.return_value=[game._replace(layer=layer)]
+                self.pid.return_value=game.pid if focused else 77
+                with patch.object(m,'native_game_process',return_value=False):
+                    self.assertEqual(self.platform.find_game_window(),game.number)
+                    self.assertEqual(self.platform.capture_allowed(game.number),focused)
+
+    def test_raised_game_is_selected_ahead_of_same_process_normal_window(self):
+        game=self.game._replace(layer=26,owner='MapleStory Classic World',title='')
+        normal=game._replace(number=202,layer=0,rect=(0,0,2000,1200))
+        self.windows.return_value=[game,normal]
+        self.assertEqual(self.platform.find_game_window(),game.number)
+        self.assertTrue(self.platform.capture_allowed(game.number))
+        self.assertFalse(self.platform.capture_allowed(normal.number))
+
+    def test_raised_layer_keeps_identity_permission_and_visibility_guards(self):
+        game=self.game._replace(layer=26,owner='MapleStory Classic World',title='')
+        for owner in ('Google Chrome','MapleStory Launcher','wineloader','AutoFill (MapleStory Classic World)'):
+            with self.subTest(owner=owner),patch.object(m,'native_game_process',return_value=False):
+                self.windows.return_value=[game._replace(owner=owner)]
+                self.assertIsNone(self.platform.find_game_window())
+                self.assertFalse(self.platform.capture_allowed(game.number))
+        self.windows.return_value=[game]
+        self.permission.return_value=False
+        self.assertFalse(self.platform.capture_allowed(game.number))
+        self.permission.return_value=True
+        self.windows.return_value=[game._replace(onscreen=False)]
+        self.assertIsNone(self.platform.find_game_window())
+        self.assertFalse(self.platform.capture_allowed(game.number))
+        for layer in (-1,20,25,27,1000):
+            with self.subTest(layer=layer):
+                self.windows.return_value=[game._replace(layer=layer)]
+                self.assertIsNone(self.platform.find_game_window())
+                self.assertFalse(self.platform.capture_allowed(game.number))
+
+    def test_raised_game_focus_loss_discards_pixels(self):
+        self.windows.return_value=[self.game._replace(layer=26)]
+        pid=self.pid
+        class Fake:
+            def grab(self,region):
+                pid.return_value=77
+                return b'pixels must not reach OCR'
+        capture=GameCapture(Fake(),lambda:self.game.rect,lambda:self.platform.capture_allowed(self.game.number))
+        with self.assertRaises(CaptureBlocked):
+            capture.grab(dict(left=-490,top=30,width=100,height=100))
+
     def test_native_executable_fallback(self):
         self.windows.return_value=[self.game._replace(owner='Localized game label')]
         with patch.object(m,'native_game_process',return_value=True):
