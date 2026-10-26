@@ -1,6 +1,12 @@
 # Windows and Mac verification notes
 
-## Combined download release
+## Mac 0.1.21 — hotbar raster correction
+
+The hotbar frame matcher permits a small additional luminance difference only when the fixed slot structure matches with high confidence. The existing acceptance path is retained; labels and counts remain excluded from frame matching. A HUD-only regression crop contains no player names, chat, desktop or account information. It reproduces the old rejection and reads 26 Orange Potions and 146 Blue Potions with the adjustment. Covered and duplicate panels remain rejected.
+
+Inventory recognition, digit recognition, potion usage/source selection, EXP calculations and capture/privacy behavior are unchanged. This does not claim to fix the reported brief EXP-number interruptions. The Mac app is newly built as 0.1.21. The Windows download remains byte-identical to 0.1.20, with its original internal 0.1.19 RC2 version and matching source retained. Current package checks are attached in VERIFICATION.json; actual in-game hotbar confirmation is still needed.
+
+## Previous combined download release
 
 The consolidated **0.1.20** release preserves the exact tested Mac 0.1.20 RC4 and Windows 0.1.19 RC2 archives under clean download names. The rename does not change either app binary. Earlier 0.1.20 prerelease entries have been replaced by this single public release; future public versions increase sequentially. Windows has not been rebuilt just to match the shared download version.
 
