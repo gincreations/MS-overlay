@@ -1,11 +1,27 @@
 """Prevent the rejected timing adapter/warm-up from returning."""
 from ast_contract import legacy_dump
-import ast,hashlib,json,sys,unittest
+import ast,copy,hashlib,json,sys,unittest
 from pathlib import Path
 from unittest.mock import Mock,patch
 from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import maple_exp as m
+def rate_contract_method(method):
+ # Only the three UI-only status assignments and their exact reading-event
+ # wrapper are excluded. Preserve the original queue, delivery and clock hash.
+ method=copy.deepcopy(method)
+ allowed={legacy_dump(ast.parse(source).body[0]) for source in (
+  'self.capture_blocked_reason = payload',
+  'self.capture_blocked_reason = "Screen read failed"',
+  'if kind == "reading":\n self.capture_blocked_reason = None',
+ )}
+ class StatusOnly(ast.NodeTransformer):
+  def visit_Assign(self,node):
+   return None if legacy_dump(node) in allowed else self.generic_visit(node)
+  def visit_If(self,node):
+   return None if legacy_dump(node) in allowed else self.generic_visit(node)
+ return StatusOnly().visit(method) if method.name=='_pump' else method
+
 class RollbackTests(unittest.TestCase):
  def test_original_app_delivery_clock_and_display_restored(self):
   tree=ast.parse((Path(__file__).resolve().parents[1]/'maple_exp.py').read_text())
@@ -16,7 +32,18 @@ class RollbackTests(unittest.TestCase):
     continue
    with self.subTest(name=name):
     method=next(n for n in app.body if isinstance(n,ast.FunctionDef) and n.name==name)
-    self.assertEqual(hashlib.sha256(legacy_dump(method).encode()).hexdigest(),expected)
+    self.assertEqual(hashlib.sha256(legacy_dump(rate_contract_method(method)).encode()).hexdigest(),expected)
+ def test_status_projection_does_not_hide_delivery_or_clock_changes(self):
+  method=ast.parse('def _pump(self):\n self.capture_blocked_reason = payload\n self._handle(payload)').body[0]
+  projected=rate_contract_method(method)
+  self.assertEqual(legacy_dump(projected),legacy_dump(ast.parse('def _pump(self):\n self._handle(payload)').body[0]))
+  changed=copy.deepcopy(method)
+  changed.body.append(ast.parse('self.session.pause()').body[0])
+  self.assertNotEqual(legacy_dump(rate_contract_method(changed)),legacy_dump(projected))
+  changed=copy.deepcopy(method)
+  changed.body[-1].value.func.attr='_different_delivery'
+  self.assertNotEqual(legacy_dump(rate_contract_method(changed)),legacy_dump(projected))
+
  def test_no_new_adapter_or_freshness_policy(self):
   self.assertFalse(hasattr(m,'FarmingSession'))
   source=(Path(__file__).resolve().parents[1]/'maple_exp.py').read_text()
