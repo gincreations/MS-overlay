@@ -2,9 +2,13 @@
 
 ## Combined download release
 
-The combined 0.1.20 RC2 release labels both downloads **0.1.20 RC2**. It includes an updated Mac test build and the unchanged Windows 0.1.19 RC2 runtime. Windows has not been rebuilt just to match the shared download version.
+The combined 0.1.20 RC3 release labels both downloads **0.1.20 RC3**. It includes an updated Mac test build and the unchanged Windows 0.1.19 RC2 runtime. Windows has not been rebuilt just to match the shared download version.
 
-### Mac 0.1.20 RC2 — client detection and desktop handling
+### Mac 0.1.20 RC3 — confirmed native client name
+
+The reported process is **Maplestory Classic World**, with window title **MapleStory**. RC2 rejected this identity in a reproduced regression case. RC3 adds this exact native process name; the new regression and all 34 Mac-specific tests pass. Existing foreground-only capture checks and Mission Control behavior remain intact. Windows bytes are unchanged. Full release verification is attached as `VERIFICATION.json`; actual gameplay on the affected Mac still needs user confirmation.
+
+### Previous Mac 0.1.20 RC2 — client detection and desktop handling
 
 - Native Classic/Worlds name variants and executable-name fallback; foreground game preference and replacement-window reacquisition. A window title alone cannot enable capture of arbitrary apps.
 - Managed Mission Control window behavior, including topmost toggles and hide/show remapping. The overlay belongs to the user-selected Space, not all desktops.
