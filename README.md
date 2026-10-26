@@ -2,14 +2,14 @@
 
 A local, screen-reading tracker for **MapleStory Classic World**. It shows your farming progress without reading game memory or automating game inputs.
 
-## Download — MS Overlay 0.1.20 RC4
+## Download — MS Overlay 0.1.20
 
-- **[Windows — 0.1.20 RC4](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20-rc4/MS-Overlay-0.1.20-rc4-windows.zip)** — Windows portable download. Extract into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
-- **[Mac — 0.1.20 RC4 (Apple Silicon M1+, macOS 14+)](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20-rc4/MS-Overlay-0.1.20-rc4-mac-arm64.zip)** — Mac test build. Extract, open **Maple Private Overlay.app**, allow Screen Recording, then restart. [Mac instructions](MACOS.md).
+- **[Windows — 0.1.20](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20/MS-Overlay-0.1.20-windows.zip)** — Windows portable download. Extract into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
+- **[Mac — 0.1.20 (Apple Silicon M1+, macOS 14+)](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20/MS-Overlay-0.1.20-mac-arm64.zip)** — Mac download. Extract, open **Maple Private Overlay.app**, allow Screen Recording, then restart. [Mac instructions](MACOS.md).
 
-[Both downloads and release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.20-rc4) · [Security details](docs/SECURITY.md)
+[Both downloads and release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.20) · [Security details](docs/SECURITY.md)
 
-The Mac build includes our current features, but live gameplay still needs testing. It is ad-hoc signed, not Apple-notarized. Mac users use the overlay buttons rather than global keyboard shortcuts. Intel Macs and generic VM/streaming windows are not supported by this Mac build.
+Game detection, EXP tracking, inventory potion counts and inventory mesos have been confirmed working on the reported Mac setup. Mac hotbar potion detection and brief EXP-reading interruptions remain under investigation. It is ad-hoc signed, not Apple-notarized. Mac users use the overlay buttons rather than global keyboard shortcuts. Intel Macs and generic VM/streaming windows are not supported by this Mac build.
 
 ## Hotbar potion tracking
 
@@ -58,7 +58,7 @@ Moving the inventory may briefly interrupt readings. Keep it inside the game win
 
 ## Source and development
 
-Source, test fixtures and required licenses are included in the repository and accompanying source downloads. The unchanged Windows ZIP retains its matching 0.1.19 RC2 source; the new source archive and repository describe the 0.1.20 RC4 Mac-capable tree. Install requirements.txt in an isolated Python environment to run from source; requirements-build.txt and build.py support Windows packaging. The native build uses tools/prepare_windows_review.py with Python3.13.17 and requirements-build.txt. package_preview.py is retained only as a historical Python3.10 archive inspection/repackaging utility, not the current build path. User data, local verification output, build artifacts and credentials must never be committed.
+Source, test fixtures and required licenses are included in the repository and accompanying source downloads. The unchanged Windows ZIP retains its matching 0.1.19 RC2 source; the source archive and repository describe the matching Mac-capable tree. This release preserves the tested app binaries (Mac internal build 0.1.20-rc4); future public releases use sequential versions such as 0.1.21 and 0.1.22. Install requirements.txt in an isolated Python environment to run from source; requirements-build.txt and build.py support Windows packaging. The native build uses tools/prepare_windows_review.py with Python3.13.17 and requirements-build.txt. package_preview.py is retained only as a historical Python3.10 archive inspection/repackaging utility, not the current build path. User data, local verification output, build artifacts and credentials must never be committed.
 
 The Windows review workflow is provided as an inactive template in `docs/windows-review.yml.example`. It is not installed as GitHub Actions automation in this sharing repository.
 
