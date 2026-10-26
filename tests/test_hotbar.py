@@ -72,6 +72,28 @@ class HotbarRecognition(unittest.TestCase):
             with self.subTest(scale=scale):
                 im=cv2.resize(REAL,None,fx=scale,fy=scale,interpolation=cv2.INTER_LINEAR)
                 self.assertEqual(self.values(im),[[167],[76]])
+    def test_mac_nominal_raster_counts(self):
+        # UI-only crop: no player names, chat, desktop or account information.
+        frame=cv2.imread(str(ROOT/'tests/frames/hotbar-mac-nominal.png'))
+        selected=[AutoSelection('Orange Potion',2000001),AutoSelection('Blue Potion',2000003)]
+        self.assertEqual(len(self.hot.cells(frame)),8)
+        self.assertEqual(self.values(frame,selected),[[26],[146]])
+    def test_mac_nominal_raster_in_larger_frames(self):
+        frame=cv2.imread(str(ROOT/'tests/frames/hotbar-mac-nominal.png'))
+        selected=[AutoSelection('Orange Potion',2000001),AutoSelection('Blue Potion',2000003)]
+        for x,y in [(0,0),(1300,657),(730,450)]:
+            with self.subTest(x=x,y=y):
+                scene=np.full((806,1646,3),60,np.uint8)
+                h,w=frame.shape[:2];scene[y:y+h,x:x+w]=frame
+                self.assertEqual(self.values(scene,selected),[[26],[146]])
+    def test_mac_nominal_panel_covered_or_duplicated_rejected(self):
+        frame=cv2.imread(str(ROOT/'tests/frames/hotbar-mac-nominal.png'))
+        covered=frame.copy();covered[:,70:]=0
+        self.assertEqual(self.hot.cells(covered),[])
+        scene=np.full((150,400,3),60,np.uint8);h,w=frame.shape[:2]
+        for x in (0,220):scene[20:20+h,x:x+w]=frame
+        self.assertEqual(self.hot.cells(scene),[])
+
     def test_generated_counts_and_duplicate_slots(self):
         self.assertEqual(self.values(hotbar({1:(2010004,167),2:(2010004,167),3:(2000001,76)})),[[167,167],[76]])
     def test_changed_potions_zero_and_refill(self):

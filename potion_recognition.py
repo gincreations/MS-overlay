@@ -301,7 +301,11 @@ class HotbarDetector:
             xx,yy = loc
             patch = crop[yy:yy+h,xx:xx+w]
             corr = float(cv2.matchTemplate(patch,tg,cv2.TM_CCOEFF_NORMED,mask=tm)[0,0])
-            if value <= .10 and np.isfinite(corr) and corr >= .78:
+            # Nominal-resolution Mac captures can shift rim luminance after
+            # Retina resampling. Permit a small extra photometric error only
+            # when the fixed eight-slot structure correlates very strongly.
+            if np.isfinite(corr) and ((value <= .10 and corr >= .78)
+                                     or (value <= .12 and corr >= .90)):
                 matches.append((value,x0+xx,y0+yy,px,py))
         if not matches: return []
         matches.sort()
