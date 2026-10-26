@@ -2,16 +2,16 @@
 
 A local, screen-reading tracker for **MapleStory Classic World**. It shows your farming progress without reading game memory or automating game inputs.
 
-## Download — Windows or Mac
+## Download — MS Overlay 0.1.20 RC1
 
-- **[Windows portable ZIP](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20-rc1/Maple-Private-Overlay-0.1.19-rc2-portable.zip)** — the existing 0.1.19 RC2 Windows build, unchanged. Extract into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
-- **[Mac ZIP — Apple Silicon (M1+), macOS 14+](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20-rc1/MS-Overlay-0.1.20-rc1-mac-arm64.zip)** — new 0.1.20 RC1 test build. Extract, open **Maple Private Overlay.app**, allow Screen Recording, then restart. [Mac instructions](MACOS.md).
+- **[Windows — 0.1.20 RC1](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20-rc1/MS-Overlay-0.1.20-rc1-windows.zip)** — Windows portable download. Extract into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
+- **[Mac — 0.1.20 RC1 (Apple Silicon M1+, macOS 14+)](https://github.com/gincreations/MS-overlay/releases/download/v0.1.20-rc1/MS-Overlay-0.1.20-rc1-mac-arm64.zip)** — Mac test build. Extract, open **Maple Private Overlay.app**, allow Screen Recording, then restart. [Mac instructions](MACOS.md).
 
 [Both downloads and release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.20-rc1) · [Security details](docs/SECURITY.md)
 
 The Mac build includes our current features, but live gameplay still needs testing. It is ad-hoc signed, not Apple-notarized. Mac users use the overlay buttons rather than global keyboard shortcuts. Intel Macs and generic VM/streaming windows are not supported by this Mac build.
 
-## New in 0.1.19 RC2
+## Hotbar potion tracking
 
 - **Rebind-friendly hotbar:** recognizes slot borders instead of key labels, so potions can use different keys in any of the eight slots. Standard 4×2 layout only; expanded/custom layouts are not supported.
 - Prevents empty-slot borders from being mistaken for a White Potion.
