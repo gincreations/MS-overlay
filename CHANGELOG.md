@@ -1,3 +1,9 @@
+# Combined Windows + Mac release — 0.1.20 RC1
+
+- Adds an Apple Silicon/macOS 14+ test download alongside the existing Windows 0.1.19 RC2 download on one release page.
+- Retains all current tracking features; Mac adds foreground-window/permission capture checks and bundled native OCR.
+- Existing Windows ZIP is unchanged. Mac live gameplay still needs testing; see MACOS.md.
+
 ## 0.1.18 RC3 — Native OCR and shell-helper hardening
 
 - Replace the legacy OCR DLL tree with source-built Tesseract 5.5.3 plus pinned upstream security fixes, Leptonica 1.87.0, libpng 1.6.59 and the patched zlib 1.3.2.1 development revision. External codecs are limited to PNG/zlib; curl/archive/TLS and ScrollView are not included.

@@ -77,7 +77,7 @@ cv2.setNumThreads(1)
 # Use OpenCV's standard implementation; recognition thresholds are unchanged.
 cv2.ipp.setUseIPP(False)
 
-VERSION = "0.1.19-rc2"
+VERSION = "0.1.20-rc1"
 WINDOW_TITLE = "Maple Private Overlay"    # the version is shown in Settings
 OLD_TITLES = ()               # what versions before 0.9.3 were called
 
@@ -1133,8 +1133,11 @@ class ScreenReader:
         self.last_rect = rect
         if not getattr(self, "capture_enabled", lambda: True)():
             raise CaptureBlocked("Privacy pause: tracking is paused")
+        permission = PLATFORM.missing_permission()
+        if permission:
+            raise CaptureBlocked(permission)
         if not self.hwnd:
-            raise CaptureBlocked("Game not found: open the standalone MapleStory client (MapleStory.exe)")
+            raise CaptureBlocked("Game not found: open a supported standalone MapleStory game window")
         if not rect:
             raise CaptureBlocked("Privacy pause: restore the minimized game window")
         if not PLATFORM.capture_allowed(self.hwnd):

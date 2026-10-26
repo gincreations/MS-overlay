@@ -1,5 +1,5 @@
-"""macOS: MapleStory runs in a Windows layer (CrossOver, Whisky, Parallels...) or a game
-stream, so its window is found through CoreGraphics by its title or program name. A window
+"""macOS: recognizes native MapleStory windows and narrowly identified Wine game windows.
+Generic VM desktops, browsers and game-stream windows are deliberately not captured. A window
 is known by its window number, and positions are in points: the units mss screenshots and
 tkinter use too. Window titles (and screenshots of other programs) need the Screen Recording
 permission."""
@@ -8,13 +8,14 @@ import fcntl
 import os
 import platform
 import subprocess
-import tempfile
 from collections import namedtuple
 from pathlib import Path
 
 from .base import Hotkeys, Platform
 
 _cg = ctypes.CDLL("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
+_appkit = ctypes.CDLL("/System/Library/Frameworks/AppKit.framework/AppKit")
+_objc = ctypes.CDLL("/usr/lib/libobjc.A.dylib")
 _cf = ctypes.CDLL("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
 
 
@@ -57,6 +58,25 @@ _FONTS = {"Segoe UI": ("Helvetica Neue", None), "Segoe UI Semibold": ("Helvetica
           "Consolas": ("Menlo", None)}
 
 
+_GetClass = _api(_objc.objc_getClass, _vp, ctypes.c_char_p)
+_GetSelector = _api(_objc.sel_registerName, _vp, ctypes.c_char_p)
+_SendObject = ctypes.CFUNCTYPE(_vp, _vp, _vp)(("objc_msgSend", _objc))
+_SendPID = ctypes.CFUNCTYPE(ctypes.c_int, _vp, _vp)(("objc_msgSend", _objc))
+_SendVoid = ctypes.CFUNCTYPE(None, _vp, _vp)(("objc_msgSend", _objc))
+
+
+def frontmost_pid():
+    """NSWorkspace foreground identity; callable from the reader thread, no input hooks."""
+    pool = _SendObject(_GetClass(b"NSAutoreleasePool"), _GetSelector(b"new"))
+    try:
+        workspace = _SendObject(_GetClass(b"NSWorkspace"), _GetSelector(b"sharedWorkspace"))
+        app = _SendObject(workspace, _GetSelector(b"frontmostApplication")) if workspace else None
+        return _SendPID(app, _GetSelector(b"processIdentifier")) if app else None
+    finally:
+        if pool:
+            _SendVoid(pool, _GetSelector(b"drain"))
+
+
 def _cf_number(d, key):
     v, n = _DictValue(d, _KEYS[key]), ctypes.c_int64()
     return n.value if v and _NumberValue(v, 4, ctypes.byref(n)) else 0            # kCFNumberSInt64Type
@@ -93,7 +113,11 @@ def is_game(w, own_pid):
     # Normal windows up to always-on-top ones: not the Dock, menu bar and the like above them.
     if not 0 <= w.layer <= _TOPMOST or w.pid == own_pid or not w.rect or w.owner.lower() in _NOT_GAME:
         return False
-    return "maplestory" in w.title.lower().replace(" ", "") or "maplestory" in w.owner.lower()
+    owner = w.owner.casefold().replace(" ", "")
+    title = w.title.casefold().replace(" ", "")
+    native = owner in {"maplestory", "maplestory.exe", "maplestoryworlds", "maplestoryworldsplayer"}
+    wine = owner in {"wine", "wine64", "wine-preloader", "wine64-preloader", "crossover"}
+    return native or (wine and "maplestory" in title)
 
 
 class MacHotkeys(Hotkeys):
@@ -126,12 +150,16 @@ class MacPlatform(Platform):
                 Path("/opt/local/bin/tesseract"), *on_path]                                 # MacPorts
 
     def claim_single_instance(self, key, title, old_titles=()):
-        self._lock = open(Path(tempfile.gettempdir()) / f"MapleEXP-{key}.lock", "w")   # macOS unlocks it at exit
+        # User-private, non-truncating lock: never follow a planted temp-file symlink.
+        folder = self.data_root() / "MapleEXPPrivate" / "locks"
+        folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+        fd = os.open(folder / f"{key}.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        self._lock = os.fdopen(fd, "r+")   # macOS unlocks it at exit
         try:
             fcntl.flock(self._lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             return True
         except OSError:
-            subprocess.run(["osascript", "-e", f'display dialog "{title} is already running."'
+            subprocess.run(["/usr/bin/osascript", "-e", f'display dialog "{title} is already running."'
                             f' with title "{title}" buttons {{"OK"}} default button 1'], capture_output=True)
             return False
 
@@ -146,9 +174,30 @@ class MacPlatform(Platform):
             if _PreflightCapture():
                 return None
         except Exception:
-            return None
+            pass
         return ("Can't see other windows. Allow this app (or your Terminal) in System Settings >"
                 " Privacy & Security > Screen Recording, then restart it.")
+
+    def capture_allowed(self, number):
+        """Fail closed unless the selected game is the foreground app's front window.
+
+        GameCapture rechecks this immediately before and after every bounded crop.
+        Screen Recording permission alone never enables arbitrary desktop capture.
+        """
+        try:
+            if not number or not _PreflightCapture():
+                return False
+            pid = frontmost_pid()
+            windows = window_list()
+            # Ignore overlay panels, but not other normal windows belonging to the game.
+            front = next((w for w in windows if w.pid == pid and w.onscreen
+                          and w.layer == 0 and w.rect), None)
+            if not front or front.number != number or not is_game(front, os.getpid()):
+                return False
+            return bool(front.rect[2] >= 100 and front.rect[3] >= 100
+                        and frontmost_pid() == pid)
+        except Exception:
+            return False
 
     def find_game_window(self):
         found = []
@@ -205,10 +254,10 @@ class MacPlatform(Platform):
             return False
 
     def open_folder(self, path):
-        subprocess.Popen(["open", str(path)])
+        subprocess.Popen(["/usr/bin/open", str(path)])
 
     def show_file(self, path):
-        subprocess.Popen(["open", "-R", str(path)])
+        subprocess.Popen(["/usr/bin/open", "-R", str(path)])
 
     def font(self, family, weight):
         mac_family, mac_weight = _FONTS.get(family, (family, None))
@@ -217,7 +266,7 @@ class MacPlatform(Platform):
     def alert(self, title, text):
         # (Tk may be what couldn't start, so AppleScript shows it. Title and text go in as arguments.)
         script = ['on run argv', 'display alert (item 1 of argv) message (item 2 of argv) as critical', 'end run']
-        args = ["osascript"] + [x for line in script for x in ("-e", line)] + [title, text]
+        args = ["/usr/bin/osascript"] + [x for line in script for x in ("-e", line)] + [title, text]
         try:
             subprocess.run(args, capture_output=True, timeout=600)
         except Exception:
@@ -227,7 +276,7 @@ class MacPlatform(Platform):
         # AppleScript reads the file as PNG data onto the clipboard. The path goes in as an
         # argument, never into the script's text.
         script = ['on run argv', 'set the clipboard to (read (POSIX file (item 1 of argv)) as «class PNGf»)', 'end run']
-        args = ["osascript"] + [x for line in script for x in ("-e", line)] + [str(path)]
+        args = ["/usr/bin/osascript"] + [x for line in script for x in ("-e", line)] + [str(path)]
         try:
             return subprocess.run(args, capture_output=True, timeout=10).returncode == 0
         except Exception:

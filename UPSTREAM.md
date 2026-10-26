@@ -10,3 +10,5 @@ The existing EXP/inventory/party screenshot crops and migration fixtures under t
 
 
 The 0.1.18 integration candidate additionally adapts PQ session handling, share-card rendering, clipboard helpers and local diagnostic concepts from guddevbaddev/Maple-Classic-Exp-Overlay v0.9.13-beta (commit 3d9ae1a6bfd7342cc1c14fdb0a5a082adf640baf), under the upstream MIT license. Original copyright and license notices are retained. This is not an endorsement or safety certification by the upstream maintainer.
+
+The 0.1.20 RC1 Mac test build adapts the macOS platform backend from the same upstream v0.9.13-beta source, adds foreground/permission restrictions and builds a fresh Apple Silicon app and patched OCR runtime. It does not redistribute upstream’s prebuilt Mac ZIP.

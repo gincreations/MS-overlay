@@ -1,4 +1,21 @@
-# 0.1.19 RC2 security and redistribution notes
+# Windows and Mac verification notes
+
+## Combined download release
+
+The combined 0.1.20 RC1 release offers the **unchanged Windows 0.1.19 RC2 ZIP** and the **Mac 0.1.20 RC1 test ZIP** on one page. The Windows binary has not been upgraded or rebuilt merely to match the Mac version number.
+
+### Mac test build
+
+- Apple Silicon arm64, macOS 14+. Fresh native app build from the current source with pinned Python dependencies and patched, source-built static OCR.
+- 26 native regression suites passed, including 21 Mac guard/lock tests; three real OCR samples and six packaged setup checks passed.
+- All 18 embedded application modules matched the tested source. All 463 runtime files and the exact ZIP were hash-verified; 160 native files were inspected for architecture, dependency paths and minimum OS version.
+- Ad-hoc signature verified before and after ZIP extraction and on an independently downloaded copy. This is **not Developer ID signing or Apple notarization**.
+- ClamAV 1.5.4 with daily 28165 scanned the Mac ZIP/source/extracted app: 470 files, zero detections/errors. Declared Python and pinned native OCR advisory queries returned no matches; other native dependencies are not exhaustively vulnerability-audited.
+- Public promotion preserves the exact tested Mac ZIP and app bytes. No Windows Defender result is claimed for this Mac package.
+
+Live gameplay, real screen-capture behavior and user-granted Screen Recording permission still need Mac tester validation. Generic VM desktops and streaming windows are blocked; global Mac hotkeys are unavailable. Automated privacy tests use synthetic screens and mocked foreground states, not a full Mac behavioral trace. No review or scan guarantees absence of all issues.
+
+### Windows 0.1.19 RC2 evidence (unchanged)
 
 ## What is being shared
 

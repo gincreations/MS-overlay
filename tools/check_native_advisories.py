@@ -1,5 +1,6 @@
 """Fail closed on OSV commit matches for the source-built native OCR components."""
 import json
+import sys
 from pathlib import Path
 import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,7 +13,7 @@ if len(results) != len(sources):
 report={'provider':'OSV','scope':'Four pinned native source commits. Coverage is not exhaustive; no matches is not a safety guarantee.',
         'components':[dict(name=s['name'],version=s['version'],commit=s['commit'],advisories=r.get('vulns',[])) for s,r in zip(sources,results)],
         'advisory_matches':sum(len(r.get('vulns',[])) for r in results)}
-work=ROOT/'verification/windows-review';work.mkdir(parents=True,exist_ok=True)
+work=ROOT/(sys.argv[1] if len(sys.argv)>1 else 'verification/windows-review');work.mkdir(parents=True,exist_ok=True)
 (work/'native-advisories.json').write_text(json.dumps(report,indent=2))
 print(json.dumps(report,indent=2))
 if report['advisory_matches']:
