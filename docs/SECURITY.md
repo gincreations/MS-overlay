@@ -2,9 +2,21 @@
 
 ## Combined download release
 
-The combined 0.1.20 RC1 release offers the **unchanged Windows 0.1.19 RC2 ZIP** and the **Mac 0.1.20 RC1 test ZIP** on one page. The Windows binary has not been upgraded or rebuilt merely to match the Mac version number.
+The combined 0.1.20 RC2 release labels both downloads **0.1.20 RC2**. It includes an updated Mac test build and the unchanged Windows 0.1.19 RC2 runtime. Windows has not been rebuilt just to match the shared download version.
 
-### Mac test build
+### Mac 0.1.20 RC2 — client detection and desktop handling
+
+- Native Classic/Worlds name variants and executable-name fallback; foreground game preference and replacement-window reacquisition. A window title alone cannot enable capture of arbitrary apps.
+- Managed Mission Control window behavior, including topmost toggles and hide/show remapping. The overlay belongs to the user-selected Space, not all desktops.
+- All 26 native regression suites passed, including 33 Mac-specific tests. Three real synthetic OCR samples and six packaged setup checks passed.
+- All 18 embedded application modules matched the tested source; all 401 runtime files were hash-verified. 110 native files passed arm64, dependency-path and minimum-OS checks. Ad-hoc signing and ZIP extraction/roundtrip checks passed.
+- CPython 3.13.17 from the SHA256-verified official python-build-standalone 20261021 archive, with the existing hash-pinned Python dependencies. The static OCR executable was reused from the prior hash-verified, signature-verified public Mac package; its signed hash and original build provenance are retained.
+- ClamAV 1.5.4 / daily 28165 scanned the updated Mac ZIP and source archive with zero detections/errors. Python dependency and pinned native OCR advisory queries returned no matches. Other native dependencies are not exhaustively vulnerability-audited.
+- The Windows ZIP is byte-identical to its previous release. No new Windows Defender or Windows regression result is claimed.
+
+These checks include actual Tk/AppKit collection flags, but not a live game session or an automated Mission Control drag/fullscreen transition. The reported Mac setup still needs user testing. This is ad-hoc signed, not Apple-notarized. Existing foreground-only capture/privacy rules remain in place.
+
+### Previous Mac 0.1.20 RC1 evidence
 
 - Apple Silicon arm64, macOS 14+. Fresh native app build from the current source with pinned Python dependencies and patched, source-built static OCR.
 - 26 native regression suites passed, including 21 Mac guard/lock tests; three real OCR samples and six packaged setup checks passed.
