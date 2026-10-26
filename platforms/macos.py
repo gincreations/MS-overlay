@@ -7,6 +7,7 @@ import ctypes
 import fcntl
 import os
 import platform
+import re
 import subprocess
 from collections import namedtuple
 from pathlib import Path
@@ -63,6 +64,38 @@ _GetSelector = _api(_objc.sel_registerName, _vp, ctypes.c_char_p)
 _SendObject = ctypes.CFUNCTYPE(_vp, _vp, _vp)(("objc_msgSend", _objc))
 _SendPID = ctypes.CFUNCTYPE(ctypes.c_int, _vp, _vp)(("objc_msgSend", _objc))
 _SendVoid = ctypes.CFUNCTYPE(None, _vp, _vp)(("objc_msgSend", _objc))
+_SendUnsigned = ctypes.CFUNCTYPE(ctypes.c_ulong, _vp, _vp)(("objc_msgSend", _objc))
+_SendIndex = ctypes.CFUNCTYPE(_vp, _vp, _vp, ctypes.c_ulong)(("objc_msgSend", _objc))
+_SendUnsignedArg = ctypes.CFUNCTYPE(None, _vp, _vp, ctypes.c_ulong)(("objc_msgSend", _objc))
+_SendText = ctypes.CFUNCTYPE(ctypes.c_char_p, _vp, _vp)(("objc_msgSend", _objc))
+
+
+def native_window(root):
+    """Resolve only this process's uniquely titled Tk window, on the UI thread.
+
+    Tk's `wm frame` is a Tk drawable, not an NSWindow pointer on macOS.
+    Never send Objective-C messages to that value.
+    """
+    app = _SendObject(_GetClass(b"NSApplication"), _GetSelector(b"sharedApplication"))
+    windows = _SendObject(app, _GetSelector(b"windows"))
+    title = root.title().encode("utf-8")
+    matches = []
+    for i in range(_SendUnsigned(windows, _GetSelector(b"count"))):
+        window = _SendIndex(windows, _GetSelector(b"objectAtIndex:"), i)
+        name = _SendObject(window, _GetSelector(b"title"))
+        if title and name and _SendText(name, _GetSelector(b"UTF8String")) == title:
+            matches.append(window)
+    return matches[0] if len(matches) == 1 else None
+
+
+def desktop_collection_behavior(flags):
+    # Managed windows participate in Mission Control even at the floating level.
+    # Keep one selected Space (movable by the user), not a copy on every desktop.
+    # Auxiliary permits joining a fullscreen game's Space, without making the
+    # overlay itself a fullscreen-primary window. Preserve unrelated policy bits.
+    clear = 1 | 2 | 8 | 16 | 64 | 128 | 512
+    return (flags & ~clear) | 4 | 32 | 256
+
 
 
 def frontmost_pid():
@@ -108,16 +141,51 @@ def window_list(option=_ON_SCREEN | _NO_DESKTOP, number=0):
         _CFRelease(arr)
 
 
-def is_game(w, own_pid):
-    """Could this window be MapleStory's?"""
-    # Normal windows up to always-on-top ones: not the Dock, menu bar and the like above them.
-    if not 0 <= w.layer <= _TOPMOST or w.pid == own_pid or not w.rect or w.owner.lower() in _NOT_GAME:
+def _game_name(value):
+    """Normalize native app labels, not arbitrary substrings in window titles."""
+    value = value.casefold().strip()
+    for suffix in (".app", ".exe"):
+        if value.endswith(suffix):
+            value = value[:-len(suffix)]
+    return re.sub(r"[\s_-]+", "", value)
+
+
+_NATIVE_GAMES = {"maplestory", "maplestoryclassic", "maplestoryclassicplayer",
+                 "maplestoryclassicclient", "maplestoryworlds", "maplestoryworldsplayer",
+                 "maplestoryworldsclient"}
+
+
+def native_game_process(pid):
+    """Fallback for a localized/truncated CG owner label, using the app executable.
+
+    No window-title-only matching: browsers, generic VM/streaming processes and
+    launchers with a MapleStory page/title are not thereby eligible for capture.
+    """
+    pool = _SendObject(_GetClass(b"NSAutoreleasePool"), _GetSelector(b"new"))
+    try:
+        send_pid = ctypes.CFUNCTYPE(_vp, _vp, _vp, ctypes.c_int)(("objc_msgSend", _objc))
+        app = send_pid(_GetClass(b"NSRunningApplication"),
+                       _GetSelector(b"runningApplicationWithProcessIdentifier:"), pid)
+        url = _SendObject(app, _GetSelector(b"executableURL")) if app else None
+        name = _SendObject(url, _GetSelector(b"lastPathComponent")) if url else None
+        raw = _SendText(name, _GetSelector(b"UTF8String")) if name else None
+        return bool(raw and _game_name(raw.decode("utf-8", "replace")) in _NATIVE_GAMES)
+    except Exception:
         return False
-    owner = w.owner.casefold().replace(" ", "")
-    title = w.title.casefold().replace(" ", "")
-    native = owner in {"maplestory", "maplestory.exe", "maplestoryworlds", "maplestoryworldsplayer"}
-    wine = owner in {"wine", "wine64", "wine-preloader", "wine64-preloader", "crossover"}
-    return native or (wine and "maplestory" in title)
+    finally:
+        if pool:
+            _SendVoid(pool, _GetSelector(b"drain"))
+
+
+def is_game(w, own_pid):
+    """Recognize native Classic/Worlds identities and narrowly named Wine games."""
+    if not 0 <= w.layer <= _TOPMOST or w.pid == own_pid or not w.rect or w.owner.casefold() in _NOT_GAME:
+        return False
+    owner = _game_name(w.owner)
+    title = _game_name(w.title)
+    native = owner in _NATIVE_GAMES
+    wine = owner in {"wine", "wine64", "winepreloader", "wine64preloader", "crossover"}
+    return native or (wine and "maplestory" in title) or native_game_process(w.pid)
 
 
 class MacHotkeys(Hotkeys):
@@ -200,11 +268,17 @@ class MacPlatform(Platform):
             return False
 
     def find_game_window(self):
-        found = []
-        for w in window_list():
-            if is_game(w, os.getpid()):
-                rect = self.client_rect(w.number)
-                found.append((rect[2] * rect[3] if rect else 0, w.number))
+        windows = window_list()
+        pid = frontmost_pid()
+        # Match the same front normal window capture_allowed uses. A large
+        # background client/launcher must not beat the foreground game window.
+        front = next((w for w in windows if w.pid == pid and w.onscreen
+                      and w.layer == 0 and w.rect), None)
+        if front and is_game(front, os.getpid()) and min(front.rect[2:]) >= 100:
+            return front.number
+        found = [(w.rect[2] * w.rect[3], w.number) for w in windows
+                 if w.onscreen and w.rect and min(w.rect[2:]) >= 100
+                 and is_game(w, os.getpid())]
         return max(found)[1] if found else None
 
     def window_exists(self, number):
@@ -252,6 +326,22 @@ class MacPlatform(Platform):
             return ok
         except Exception:
             return False
+
+    def style_window(self, root, background, text):
+        if not getattr(root, "_mac_space_hook", False):
+            def remapped(event):
+                if event.widget is root:
+                    # Tk updates native collection flags after the Map event.
+                    for delay in (0, 150):
+                        root.after(delay, lambda: self.style_window(root, background, text)
+                                   if root.winfo_exists() else None)
+            root.bind("<Map>", remapped, add="+")
+            root._mac_space_hook = True
+        window = native_window(root)
+        if window:
+            flags = _SendUnsigned(window, _GetSelector(b"collectionBehavior"))
+            _SendUnsignedArg(window, _GetSelector(b"setCollectionBehavior:"),
+                             desktop_collection_behavior(flags))
 
     def open_folder(self, path):
         subprocess.Popen(["/usr/bin/open", str(path)])

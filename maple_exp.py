@@ -77,7 +77,7 @@ cv2.setNumThreads(1)
 # Use OpenCV's standard implementation; recognition thresholds are unchanged.
 cv2.ipp.setUseIPP(False)
 
-VERSION = "0.1.20-rc1"
+VERSION = "0.1.20-rc2"
 WINDOW_TITLE = "Maple Private Overlay"    # the version is shown in Settings
 OLD_TITLES = ()               # what versions before 0.9.3 were called
 
@@ -1239,6 +1239,14 @@ class ScreenReader:
         self.next_job_read = now + (60 if job else 10)
 
     def _game_rect(self):
+        if sys.platform == "darwin":
+            # Native clients can replace the launcher window or change window ID
+            # when entering another Space/fullscreen. Follow the selected game.
+            selected = PLATFORM.find_game_window()
+            if selected != self.hwnd:
+                self.hwnd = selected
+                self._forget_places()
+                self.size = None
         if not (self.hwnd and PLATFORM.window_exists(self.hwnd)):
             self.hwnd, self.box, self.map_box = PLATFORM.find_game_window(), None, None
         rect = PLATFORM.client_rect(self.hwnd) if self.hwnd else None
@@ -3555,6 +3563,9 @@ class App:
     def _apply_window_settings(self):
         self.root.attributes("-topmost", bool(self.cfg["topmost"]))
         self.root.attributes("-alpha", 1 - min(MAX_TRANSPARENCY, max(0, int(self.cfg["transparency"]))) / 100)
+        if sys.platform == "darwin":
+            self.root.after_idle(lambda: PLATFORM.style_window(self.root, INK, TEXT_DIM)
+                                 if self.root.winfo_exists() else None)
 
     def _switch(self, parent, text, var):
         """An on/off switch tied to a BooleanVar."""

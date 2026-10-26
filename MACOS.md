@@ -8,7 +8,9 @@ Apple Silicon (M1 or newer), macOS 14 or newer. Intel Macs are not supported by 
 
 Tracking pauses when another app is in front. Global keyboard shortcuts are not available on Mac; use the overlay buttons. EXP, mesos, hotbar-first potion counts and inventory fallback use the same recognition and calculation logic as Windows.
 
-The initial test build recognizes native MapleStory/MapleStory Worlds windows and narrowly named Wine game windows. Generic virtual-machine desktops, browsers and streaming clients are deliberately not captured. CrossOver/Wine recognition and live gameplay still need testing on your setup. Only the standard 4×2 potion hotbar layout is currently supported.
+The Mac build recognizes native MapleStory Classic/MapleStory Worlds window-name variants and narrowly named Wine game windows. It prefers the foreground game and reacquires its window when the client changes windows. Generic virtual-machine desktops, browsers and streaming clients are deliberately not captured. CrossOver/Wine recognition and live gameplay still need testing on your setup. Only the standard 4×2 potion hotbar layout is currently supported.
+
+The overlay participates in Mission Control even with **Always on top** enabled. Drag it to the desktop/Space you want to use; it stays assigned to that Space rather than appearing on every desktop. Tracking still pauses whenever the game is not in front. These native window settings are regression-tested; confirm the actual drag/fullscreen behavior on your Mac.
 
 **Check setup.command** runs an optional local assets/OCR/interface check and writes `setup-check.txt` beside the app. It does not capture your screen or use existing player history.
 
