@@ -1,16 +1,19 @@
-# MS Overlay — 0.1.19 RC1
+# MS Overlay — 0.1.19 RC2
 
 A local, screen-reading tracker for **MapleStory Classic World**. It shows your farming progress without reading game memory or automating game inputs.
 
 ## Download
 
-[Download the Windows portable ZIP](https://github.com/gincreations/MS-overlay/releases/download/v0.1.19-rc1/Maple-Private-Overlay-0.1.19-rc1-portable.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
+[Download the Windows portable ZIP](https://github.com/gincreations/MS-overlay/releases/download/v0.1.19-rc2/Maple-Private-Overlay-0.1.19-rc2-portable.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
 
 ## Release status
 
-**0.1.19 RC1 — Windows prerelease.** [Release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.19-rc1) · [Security details](docs/SECURITY.md)
+**0.1.19 RC2 — Windows prerelease.** [Release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.19-rc2) · [Security details](docs/SECURITY.md)
 
-## New in 0.1.19 RC1
+## New in 0.1.19 RC2
+
+- **Rebind-friendly hotbar:** recognizes slot borders instead of key labels, so potions can use different keys in any of the eight slots. Standard 4×2 layout only; expanded/custom layouts are not supported.
+- Prevents empty-slot borders from being mistaken for a White Potion.
 
 - **Hotbar-first potion tracking:** reads total stock from the classic 4×2 quickslot panel. Falls back to the visible inventory Use tab when needed—never adds both together. Select your potions as usual; no extra mode to enable.
 - Uses the same digit recognition and usage calculations as inventory tracking. Switching sources resets the reading baseline, not your accumulated usage or cost.

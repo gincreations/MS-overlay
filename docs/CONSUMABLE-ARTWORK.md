@@ -40,4 +40,6 @@ Catalog IDs are stable item identifiers. PNGs are passive reference data, not ex
 
 ## Classic quickslot UI reference
 
-The bundled hotbar key-label mask and cropped test panel are game UI artwork (Nexon/Wizet), derived from an owner-supplied image for this feature. Only the quickslot panel is retained; no character, chat or account data. Runtime captures remain in memory and are never written as fixtures.
+The bundled hotbar slot-frame mask, historical key-label test reference and cropped test panel are game UI artwork (Nexon/Wizet), derived from an owner-supplied image for this feature. Only the quickslot panel is retained; no character, chat or account data. Runtime captures remain in memory and are never written as fixtures.
+
+The runtime slot-frame mask excludes key text, potion icons and quantity digits. The key-label reference is retained only for generated regression fixtures, not runtime panel detection.

@@ -235,20 +235,20 @@ class CountFont:
 class HotbarDetector:
     """Recognize the classic 4x2 quickslot panel, not an arbitrary group of icons.
 
-    Layout candidates come from button geometry; bundled key-label artwork then
-    verifies/aligns each candidate. Counts and changing icons are never anchors.
+    Layout candidates come from button geometry; fixed slot rims/gutters then
+    verify/align each candidate. Key labels, icons and counts are never anchors.
     """
     def __init__(self, folder, detector):
         self.detector = detector
-        self.labels = cv2.imread(str(Path(folder) / 'hotbar-labels.png'), cv2.IMREAD_UNCHANGED)
-        if self.labels is None or self.labels.shape[2] != 4:
-            raise ValueError('Missing hotbar key-label reference')
+        self.frame = cv2.imread(str(Path(folder) / 'hotbar-frame.png'), cv2.IMREAD_UNCHANGED)
+        if self.frame is None or self.frame.shape[2] != 4:
+            raise ValueError('Missing hotbar frame reference')
         self.cache = OrderedDict()
         self.templates = {}
 
     def cells(self, frame):
         # Geometry search only: full-resolution pixels remain the recognition source.
-        ratio = 1.0  # Preserve small key-label geometry on high-resolution displays.
+        ratio = 1.0  # Preserve small slot-border geometry on high-resolution displays.
         small = cv2.resize(frame, None, fx=ratio, fy=ratio, interpolation=cv2.INTER_AREA) if ratio < 1 else frame
         hsv = cv2.cvtColor(small, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, np.array([0, 0, 170]), np.array([180, 65, 255]))
@@ -265,7 +265,7 @@ class HotbarDetector:
                 if not 1.05*a[2] < pitch < 1.5*a[2]:
                     continue
                 # A large icon can split one white button contour. Require
-                # three buttons per row, then let all eight labels verify it.
+                # three buttons per row, then verify all eight fixed slot rims.
                 for first_col in (0,1):
                     start=a[0]-first_col*pitch
                     top=[]
@@ -287,7 +287,7 @@ class HotbarDetector:
         grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         for x,y,px,py in sorted(proposals):
             w,h = 4*px,2*py
-            t = cv2.resize(self.labels, (w,h), interpolation=cv2.INTER_LINEAR)
+            t = cv2.resize(self.frame, (w,h), interpolation=cv2.INTER_LINEAR)
             tm = (t[:,:,3] > 240).astype(np.uint8)*255
             tg = cv2.cvtColor(t[:,:,:3], cv2.COLOR_BGR2GRAY)
             margin = max(3,round(px*.08))
@@ -325,7 +325,9 @@ class HotbarDetector:
 
     def _identify(self, cell, lo, hi):
         h,w = cell.shape[:2]
-        if np.std(cv2.cvtColor(cell[lo:hi],cv2.COLOR_BGR2GRAY)) < 15:
+        # Border contrast is not item evidence (especially for White Potion).
+        interior = cell[lo:hi,round(w*.10):round(w*.90)]
+        if np.std(cv2.cvtColor(interior,cv2.COLOR_BGR2GRAY)) < 15:
             return None
         scores = []
         for item,icon in self.detector.icons.items():

@@ -17,7 +17,7 @@ on:
       review_tag:
         description: 'Published or draft candidate tag for bounded trace'
         type: string
-        default: 'v0.1.19-rc1'
+        default: 'v0.1.19-rc2'
       zip_sha256:
         description: 'Expected exact portable ZIP SHA256'
         type: string
@@ -25,7 +25,7 @@ on:
       exe_sha256:
         description: 'Expected exact application EXE SHA256'
         type: string
-        default: '1a9eada8519e582ce14fdf1f9530934392e243a02eccc97db56def746e6356f3'
+        default: '1194c1ec82c633526a7e4f9733c16658d8cf4b2c00ec6e3d181d28d8109b826c'
 permissions:
   contents: read
   actions: read
@@ -141,7 +141,7 @@ jobs:
       - name: Scan final portable ZIP without modifying it
         shell: pwsh
         run: |
-          $zip = (Resolve-Path 'verification/windows-review/download/Maple-Private-Overlay-0.1.19-rc1-portable.zip').Path
+          $zip = (Resolve-Path 'verification/windows-review/download/Maple-Private-Overlay-0.1.19-rc2-portable.zip').Path
           $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash
           $scanner = Join-Path $env:ProgramFiles 'Windows Defender/MpCmdRun.exe'
           & $scanner -Scan -ScanType 3 -File $zip -DisableRemediation

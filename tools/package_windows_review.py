@@ -63,7 +63,7 @@ with zipfile.ZipFile(portable, 'w', zipfile.ZIP_DEFLATED) as z:
     for path in sorted(ROOT.glob('LICENSE*')):
         if path.is_file(): z.write(path, prefix + path.name)
     z.writestr(prefix + 'Check setup.cmd', '@echo off\r\ncd /d "%~dp0"\r\n"Maple Private Overlay.exe" --check-setup\r\npause\r\n')
-    z.writestr(prefix + 'READ FIRST.txt', 'Maple Private Overlay 0.1.19 RC1\nExtract the entire ZIP before running. No administrator privileges are needed.\nRun Check setup.cmd, then Maple Private Overlay.exe.\nThis exact EXE passed an enabled Defender scan and native setup on an isolated Windows runner.\nThese checks are not a guarantee against all malicious behavior. The old 0.1.17 detection is unresolved.\nDo not disable antivirus or add exclusions. If detected, stop and retain the alert details.\nNo self-updater, telemetry, wallet/password access features, or automatic uploads.\n')
+    z.writestr(prefix + 'READ FIRST.txt', 'Maple Private Overlay 0.1.19 RC2\nExtract the entire ZIP before running. No administrator privileges are needed.\nRun Check setup.cmd, then Maple Private Overlay.exe.\nThis exact EXE passed an enabled Defender scan and native setup on an isolated Windows runner.\nThese checks are not a guarantee against all malicious behavior. The old 0.1.17 detection is unresolved.\nDo not disable antivirus or add exclusions. If detected, stop and retain the alert details.\nNo self-updater, telemetry, wallet/password access features, or automatic uploads.\n')
     z.writestr(prefix + 'WINDOWS-REVIEW.json', json.dumps(review, indent=2))
     z.writestr(prefix + 'RUNTIME-SHA256.json', json.dumps(manifest, indent=2))
     z.write(app / 'setup-check.json', prefix + 'TESTED-SETUP.json')

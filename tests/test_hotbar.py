@@ -18,11 +18,11 @@ def hotbar(items=None,scale=1):
     if items is None:items={2:(2010004,167),3:(2000001,76)}
     d=Detector(ASSETS);ref=cv2.imread(str(ASSETS/'hotbar-labels.png'),-1)
     # Empty Ins slot from the same game UI; key labels remain independent of items.
-    board=np.zeros((96,196,3),np.uint8)
+    board=ref[:,:,:3].copy()
     blank=ref[:48,49:98,:3].copy()
     for idx in range(8):
         x,y=(idx%4)*49,(idx//4)*48
-        board[y:y+48,x:x+49]=blank
+        board[y+3:y+45,x+3:x+46]=blank[3:45,3:46]
         if idx in items:
             item,count=items[idx];ox,oy=d.catalog[item]['origin']
             icon=cv2.resize(d.icons[item],None,fx=1.4,fy=1.4,interpolation=cv2.INTER_LINEAR)
@@ -39,6 +39,18 @@ def hotbar(items=None,scale=1):
     # Keep enough margin for geometric alignment; this is only generated game UI.
     canvas=np.full((116,216,3),80,np.uint8);canvas[10:106,10:206]=board
     return cv2.resize(canvas,None,fx=scale,fy=scale,interpolation=cv2.INTER_LINEAR)
+
+
+def rebind(frame, labels, origin=(10,10)):
+    """Replace only the key-text band, leaving slot rims and potion pixels intact."""
+    frame=frame.copy()
+    for idx,text in enumerate(labels):
+        x,y=origin[0]+(idx%4)*49,origin[1]+(idx//4)*48
+        band=frame[y+3:y+18,x+3:x+46]
+        band[:]=232
+        cv2.putText(band,text,(1,11),cv2.FONT_HERSHEY_SIMPLEX,.32,(120,120,120),2,cv2.LINE_AA)
+        cv2.putText(band,text,(1,11),cv2.FONT_HERSHEY_SIMPLEX,.32,(255,255,255),1,cv2.LINE_AA)
+    return frame
 
 
 class HotbarRecognition(unittest.TestCase):
@@ -87,7 +99,7 @@ class HotbarRecognition(unittest.TestCase):
         self.assertEqual(self.hot.cells(scene),[])
         scene=np.full((300,300,3),240,np.uint8);paste(scene,self.detector.icons[2010004],40,40)
         self.assertEqual(self.hot.cells(scene),[])
-    def test_missing_key_labels_rejected(self):
+    def test_destroyed_slot_top_borders_rejected(self):
         frame=hotbar({})
         for row in range(2):frame[10+row*48:10+row*48+18,10:206]=240
         self.assertEqual(self.hot.cells(frame),[])
@@ -97,6 +109,55 @@ class HotbarRecognition(unittest.TestCase):
         self.assertTrue(self.hot.cells(REAL))
         im=REAL.copy();im[:,100:]=0
         self.assertEqual(self.hot.cells(im),[])
+
+    def test_rebound_key_labels_and_no_labels(self):
+        for labels in [('Q','W','E','R','A','S','D','F'),('1','2','3','4','5','6','7','8'),('F1','F2','Ctrl','Alt','Tab','Z','X','C'),('',)*8]:
+            with self.subTest(labels=labels):
+                self.assertEqual(self.values(rebind(hotbar(),labels)),[[167],[76]])
+    def test_real_crop_with_replaced_key_labels(self):
+        x,y,_,_=self.hot.cells(REAL)[0]
+        self.assertEqual(self.values(rebind(REAL,('Q','W','E','R','A','S','D','F'),(x,y))),[[167],[76]])
+    def test_all_catalog_icons_with_rebound_keys(self):
+        for item,row in self.detector.catalog.items():
+            with self.subTest(item=item):
+                frame=rebind(hotbar({2:(item,200)}),('Q','W','E','R','A','S','D','F'))
+                self.assertEqual(self.values(frame,[AutoSelection(row['name'],item)]),[[200]])
+    def test_all_eight_slots_with_rebound_keys(self):
+        for slot in range(8):
+            for item,n,selection in [(2010004,167,SELECT[0]),(2000001,76,SELECT[1])]:
+                with self.subTest(slot=slot,item=item):
+                    frame=rebind(hotbar({slot:(item,n)}),('Q','W','E','R','A','S','D','F'))
+                    self.assertEqual(self.values(frame,[selection]),[[n]])
+    def test_rebound_labels_scaled_full_game(self):
+        frame=rebind(hotbar(),('1','2','3','4','F1','F2','Alt','Tab'))
+        for scale in [1,1.25,1.5,2]:
+            with self.subTest(scale=scale):
+                panel=cv2.resize(frame,None,fx=scale,fy=scale,interpolation=cv2.INTER_LINEAR)
+                game=np.full((1200,1920,3),60,np.uint8);h,w=panel.shape[:2]
+                game[1200-h:,1920-w:]=panel
+                self.assertEqual(self.values(game),[[167],[76]])
+    def test_rebound_empty_slots_not_potions(self):
+        frame=rebind(hotbar({}),('Q','W','E','R','A','S','D','F'))
+        self.assertTrue(self.hot.cells(frame))
+        for item,row in self.detector.catalog.items():
+            with self.subTest(item=item):self.assertEqual(self.values(frame,[AutoSelection(row['name'],item)]),[[]])
+    def test_runtime_mask_excludes_labels_icons_and_counts(self):
+        for row in range(2):
+            for col in range(4):
+                mask=self.hot.frame[row*48:(row+1)*48,col*49:(col+1)*49,3]
+                self.assertFalse(np.any(mask[3:18]))
+                self.assertFalse(np.any(mask[27:45]))
+                self.assertFalse(np.any(mask[18:27,3:46]))
+    def test_unframed_white_button_grid_rejected(self):
+        frame=np.full((116,216,3),60,np.uint8)
+        for idx in range(8):
+            x,y=10+(idx%4)*49,10+(idx//4)*48
+            cv2.rectangle(frame,(x+3,y+3),(x+43,y+43),(240,240,240),-1)
+        self.assertEqual(self.hot.cells(frame),[])
+    def test_two_distinct_hotbars_rejected(self):
+        scene=np.full((300,500,3),60,np.uint8)
+        for x in [0,260]:scene[50:166,x:x+216]=rebind(hotbar(),('Q','W','E','R','A','S','D','F'))
+        self.assertEqual(self.hot.cells(scene),[])
 
 
 class SourceSelection(unittest.TestCase):
