@@ -1,6 +1,6 @@
 """Opt-in, screen-only potion observations. No files, network or game input.
 
-Counts are estimates from a selected visible stack, not proof of consumption.
+Counts are estimates from visible inventory stacks or a hotbar total, not proof of consumption.
 Selections and icon reference pixels live only in RAM; names may be saved by the UI.
 """
 import re
@@ -196,6 +196,7 @@ class PotionService:
         self.emit = emit
         self.assets = assets
         self.detector = None
+        self.hotbar_detector = None
         self.identities = {}
         self.lock = threading.Lock()
         self.selections = ()
@@ -246,15 +247,26 @@ class PotionService:
             return
         from potion_recognition import AutoSelection, inventory_region
         if all(isinstance(s, AutoSelection) for s in selections):
+            # One foreground-checked in-memory game capture feeds both readers.
+            # Mask our overlay before recognition; never use it as a hotbar.
+            own = getattr(getattr(covered, "__self__", None), "own_rect", None)
+            if own is None and covered(wx,wy,w,h):
+                self._enqueue((generation,now,("auto",None,None,selections,None),getattr(tess,"cmd",None)))
+                self.emit(("potion_gaps",(generation,now,[(i,"Potion area covered — move the overlay") for i in range(len(selections))])))
+                return
+            game = np.array(screen.grab(dict(left=wx,top=wy,width=w,height=h)))[:,:,:3].copy()
+            if own:
+                ox,oy,ow,oh=own
+                x0,y0=max(0,ox-wx),max(0,oy-wy)
+                x1,y1=min(w,ox-wx+ow),min(h,oy-wy+oh)
+                if x0<x1 and y0<y1:game[y0:y1,x0:x1]=0
             frame, region = None, None
             if inventory is not None:
                 x,y,bw,bh = inventory_region(inventory,w,h)
                 if bw>0 and bh>0 and not covered(wx+x,wy+y,bw,bh):
                     region=(x,y,bw,bh)
-                    frame=np.array(screen.grab(dict(left=wx+x,top=wy+y,width=bw,height=bh)))[:,:,:3].copy()
-            if frame is None:
-                self.emit(("potion_gaps",(generation,now,[(i,"Inventory anchor unreadable — keep Use tab and mesos field uncovered") for i in range(len(selections))])))
-            self._enqueue((generation,now,("auto",frame,region,selections),getattr(tess,"cmd",None)))
+                    frame=game[y:y+bh,x:x+bw].copy()
+            self._enqueue((generation,now,("auto",frame,region,selections,game),getattr(tess,"cmd",None)))
             return
         samples = []
         for selection in selections:
@@ -295,9 +307,10 @@ class PotionService:
             values = []
             tess = Tesseract(cmd, timeout=2) if cmd else None
             if isinstance(samples,tuple) and samples[0]=="auto":
-                _,frame,region,selections=samples
+                _,frame,region,selections,*extra=samples
+                hotbar=extra[0] if extra else None
                 try:
-                    values=self._automatic(frame,region,selections,tess,generation,now)
+                    values=self._automatic(frame,region,selections,tess,generation,now,hotbar)
                 except Exception:
                     # Fail closed: damaged artwork / unsupported geometry cannot turn
                     # into a guessed count or take down EXP tracking.
@@ -319,38 +332,60 @@ class PotionService:
             if current and not self.stop.is_set():
                 self.emit(("potion_counts", (generation, now, values)))
 
-    def _automatic(self,frame,region,selections,tess,generation,now):
-        from potion_recognition import Detector, CountFont
-        if frame is None:
+    def _automatic(self,frame,region,selections,tess,generation,now,hotbar=None):
+        from potion_recognition import Detector, CountFont, HotbarDetector
+        if frame is None and hotbar is None:
             self.identities.clear()
-            return [(None,"Inventory anchor unreadable — keep Use tab and mesos field uncovered") for _ in selections]
+            return [(None,"Hotbar / inventory unreadable — keep the potion area visible") for _ in selections]
         if self.detector is None:
             self.detector=Detector(self.assets)
             self.count_font=CountFont(self.assets)
+        hot_samples=[([],"Hotbar not recognized") for _ in selections]
+        if hotbar is not None:
+            if self.hotbar_detector is None:self.hotbar_detector=HotbarDetector(self.assets,self.detector)
+            hot_samples=self.hotbar_detector.samples(hotbar,selections)
+        inventory_samples=None
         output=[]
-        for i,(stacks,why) in enumerate(self.detector.samples(frame,selections)):
-            identity=(generation,region,tuple(box for box,_ in stacks))
+        def read(stacks, total):
+            if not stacks:return None,"Selected item not visible / not recognized"
+            if len(stacks)>(8 if total else 6):return None,"Too many visible stacks to read reliably"
+            counts=[]
+            for box,image in stacks:
+                if self.stop.is_set():return None,"Stopped"
+                if box[2]<32:return None,"Potion counts too small — enlarge the game UI"
+                value=self.count_font.read(image,box[2])
+                if value is None:return None,"Count unreadable — waiting"
+                counts.append(value)
+            if total:
+                # Repeated quickslots show the same aggregate; never sum them.
+                if len(set(counts))!=1:return None,"Hotbar counts disagree — waiting"
+                return counts[0],"Hotbar total"
+            value=sum(counts)
+            return (value,"") if value<=9999 else (None,"Count exceeds supported range")
+        for i,(stacks,why) in enumerate(hot_samples):
+            value,problem=read(stacks,True)
+            source,area="hotbar",None
+            if value is None:
+                if inventory_samples is None:
+                    inventory_samples=(self.detector.samples(frame,selections) if frame is not None else
+                                       [([],"Hotbar / inventory unreadable — keep the potion area visible") for _ in selections])
+                stacks,why=inventory_samples[i]
+                source,area="inventory",region
+                value,problem=read(stacks,False)
+                if not stacks:problem=why
             key=selections[i].item_id
+            if value is None:
+                self.identities.pop(key,None)
+                output.append((None,problem));continue
+            identity=(generation,(source,area),tuple(box for box,_ in stacks))
             prior=self.identities.get(key)
             same=(prior is not None and prior[0]==identity[0] and prior[1]==identity[1]
                   and len(prior[2])==len(identity[2]) and all(max(abs(a-b) for a,b in zip(old,new))<=max(2,new[2]*.12)
                       for old,new in zip(prior[2],identity[2])))
             if not same:
-                self.emit(("potion_gaps",(generation,now,[(i,"Visible stacks changed — new baseline")])))
+                self.emit(("potion_gaps",(generation,now,[(i,"Potion source / visible slots changed — new baseline")])))
             self.identities[key]=identity
-            if not stacks or len(stacks)>6:
-                output.append((None,why if not stacks else "Too many visible stacks to read reliably"));continue
-            counts=[]
-            count_problem="Count unreadable — waiting"
-            for box,image in stacks:
-                if self.stop.is_set():return [(None,"Stopped") for _ in selections]
-                if box[2]<32:
-                    count_problem="Potion counts too small — enlarge the game UI"
-                    break
-                value=self.count_font.read(image,box[2])
-                if value is None:break
-                counts.append(value)
-            output.append((sum(counts),"") if len(counts)==len(stacks) else (None,count_problem))
+            output.append((value,problem))
         return output
 
     def close(self):

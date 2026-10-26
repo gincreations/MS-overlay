@@ -37,3 +37,7 @@ Catalog IDs are stable item identifiers. PNGs are passive reference data, not ex
 - Count digit 7: https://maplestory.io/api/wz/img/GMS/83/UI/Basic.img/ItemNo/7; SHA-256 `f37cdef6b77c87a27fce0b431794368f9fe618d8dfb3fee8540f26190ea95b07`.
 - Count digit 8: https://maplestory.io/api/wz/img/GMS/83/UI/Basic.img/ItemNo/8; SHA-256 `3b07d3633829189192881449106ca5d6082c0952d4417f5d688609c974788e63`.
 - Count digit 9: https://maplestory.io/api/wz/img/GMS/83/UI/Basic.img/ItemNo/9; SHA-256 `d9100ffd02bb68b1c1cbf9117c4bb1bdea5011b72437f1cbca22e77ebf42beea`.
+
+## Classic quickslot UI reference
+
+The bundled hotbar key-label mask and cropped test panel are game UI artwork (Nexon/Wizet), derived from an owner-supplied image for this feature. Only the quickslot panel is retained; no character, chat or account data. Runtime captures remain in memory and are never written as fixtures.

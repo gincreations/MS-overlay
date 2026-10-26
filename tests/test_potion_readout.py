@@ -61,20 +61,19 @@ try:
 finally:
  app.close();app._worker_thread.join(3)
  if app.potion_service.thread:app.potion_service.thread.join(3)
-# Potion computation, recognition and capture guard remain unchanged.
-# App/PQ/share/diagnostics and OCR data lookup are now deliberately extended;
-# original rate, capture and OCR behaviors have their own regression suites.
-contract=json.loads((Path(__file__).parent/'frames/potion-display-scope.json').read_text())
-for filename,expected in contract.items():
- if filename in ("maple_exp.py", "ocr.py"): continue  # authorized 0.1.18 integration; tested separately
- data=(Path(__file__).resolve().parents[1]/filename).read_bytes()
- if filename=='maple_exp.py':
-  tree=ast.parse(data)
-  for node in tree.body:
-   if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='VERSION' for t in node.targets):node.value=ast.Constant('0.1.15-private-preview')
-   if isinstance(node,ast.ClassDef) and node.name=='ScreenReader':
-    for method in node.body:
-     if isinstance(method,ast.FunctionDef) and method.name=='_read_extras':method.body=[ast.Pass()]
-  data=legacy_dump(tree).encode()
- check(filename+' remains unchanged by feature integration',hashlib.sha256(data).hexdigest()==expected)
+# Hotbar capture/source arbitration is intentionally extended. Preserve the
+# original inventory recognizer, count font, usage/refill arithmetic, prices,
+# manual selection and lifecycle methods with hashes derived from pre-feature RC3.
+root_path=Path(__file__).resolve().parents[1]
+contract=json.loads((Path(__file__).parent/'frames/potion-computation-contract.json').read_text())
+for filename,scopes in contract.items():
+ tree=ast.parse((root_path/filename).read_bytes())
+ for scope,expected in scopes.items():
+  node=tree
+  for part in scope.split('.'):
+   node=next(n for n in node.body if getattr(n,'name',None)==part)
+  check(filename+': '+scope+' retains original inventory/count/usage behavior',
+        hashlib.sha256(legacy_dump(node).encode()).hexdigest()==expected)
+original=json.loads((Path(__file__).parent/'frames/potion-display-scope.json').read_text())
+check('privacy_guard.py remains byte-identical',hashlib.sha256((root_path/'privacy_guard.py').read_bytes()).hexdigest()==original['privacy_guard.py'])
 sys.exit(bool(failed))

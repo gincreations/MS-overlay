@@ -34,9 +34,10 @@ def run(m):
 
     def potions():
         from potion_tracking import read_count, Usage
-        from potion_recognition import Detector, AutoSelection, CountFont
+        from potion_recognition import Detector, AutoSelection, CountFont, HotbarDetector
         detector=Detector(m.ASSETS / "consumables")
         assert len(detector.catalog)==21
+        assert HotbarDetector(m.ASSETS / "consumables",detector).labels is not None
         font=CountFont(m.ASSETS / "consumables")
         sample=m.np.full((15,33,3),200,dtype=m.np.uint8)
         x=1

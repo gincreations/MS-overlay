@@ -101,17 +101,19 @@ class RecognitionTests(unittest.TestCase):
                 self.assertEqual(len(got[0][0]),1)
     def test_empty_grid_does_not_invent_white_potions(self):
         self.assertEqual(self.d.samples(inventory({}),[AutoSelection('White Potion',2000002)])[0][0],[])
-    def test_missing_inventory_anchor_never_captures(self):
+    def test_missing_inventory_anchor_still_checks_hotbar(self):
         from types import SimpleNamespace
-        events=[];svc=PotionService(events.append,ASSETS)
+        events=[];jobs=[];svc=PotionService(events.append,ASSETS)
         try:
-            svc.configure([AutoSelection('Red Potion',2000000)])
-            screen=SimpleNamespace(grab=lambda r:self.fail('captured without verified inventory'))
-            svc.capture(screen,(0,0,800,600),lambda *a:False,None,inventory=None)
-            self.assertEqual(events[0][0],'potion_gaps')
-        finally:
-            svc.close()
-            if svc.thread:svc.thread.join(3)
+            svc.selections=(AutoSelection('Red Potion',2000000),)
+            calls=[]
+            screen=SimpleNamespace(grab=lambda r:(calls.append(r) or np.zeros((r['height'],r['width'],4),np.uint8)))
+            with patch.object(svc,'_enqueue',side_effect=jobs.append):
+                svc.capture(screen,(0,0,800,600),lambda *a:False,None,inventory=None)
+            self.assertEqual(len(calls),1)
+            self.assertIsNone(jobs[0][2][1]) # no unverified inventory crop
+            self.assertEqual(jobs[0][2][4].shape,(600,800,3)) # fresh bounded hotbar search
+        finally:svc.close()
     def test_covered_inventory_never_captures(self):
         from types import SimpleNamespace
         events=[];svc=PotionService(events.append,ASSETS)

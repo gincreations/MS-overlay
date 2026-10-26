@@ -1,16 +1,21 @@
-# MS Overlay — 0.1.18 RC3
+# MS Overlay — 0.1.19 RC1
 
 A local, screen-reading tracker for **MapleStory Classic World**. It shows your farming progress without reading game memory or automating game inputs.
 
 ## Download
 
-[Download the Windows portable ZIP](https://github.com/gincreations/MS-overlay/releases/download/v0.1.18-rc3/Maple-Private-Overlay-0.1.18-rc3-portable.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
+[Download the Windows portable ZIP](https://github.com/gincreations/MS-overlay/releases/download/v0.1.19-rc1/Maple-Private-Overlay-0.1.19-rc1-portable.zip). Extract the entire ZIP into a new folder, run **Check setup.cmd**, then **Maple Private Overlay.exe**.
 
 ## Release status
 
-**0.1.18 RC3 — Windows prerelease.** [Release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.18-rc3) · [Security details](docs/SECURITY.md)
+**0.1.19 RC1 — Windows prerelease.** [Release notes](https://github.com/gincreations/MS-overlay/releases/tag/v0.1.19-rc1) · [Security details](docs/SECURITY.md)
 
-## New in this candidate
+## New in 0.1.19 RC1
+
+- **Hotbar-first potion tracking:** reads total stock from the classic 4×2 quickslot panel. Falls back to the visible inventory Use tab when needed—never adds both together. Select your potions as usual; no extra mode to enable.
+- Uses the same digit recognition and usage calculations as inventory tracking. Switching sources resets the reading baseline, not your accumulated usage or cost.
+
+## Other features
 
 - **PQ mode** in the more menu: tracking continues across maps; auto-idle waits 10 minutes. Off at every launch. Normal farming still uses the original policy.
 - **Share** generates a local session-stat card and copies that image only when clicked. You choose where to paste it. It does not capture a screenshot or upload anything.
@@ -23,7 +28,7 @@ This integration targets the existing Windows download. Upstream's separately pa
 
 - **EXP:** session EXP/hour, recent five-minute rate, EXP gained, progress percentages and estimated time to the next level.
 - **Mesos:** reads your visible inventory balance, tracks balance changes and estimates mesos/hour and mesos per five minutes.
-- **Optional potions:** select up to two of 21 supported potion/food types. Combines readable visible stacks, shows stock, estimated usage and usage/minute. Both selections **Off** disables potion sampling and hides the readout.
+- **Optional potions:** select up to two of 21 supported potion/food types. Uses readable hotbar totals first, otherwise combines readable visible inventory stacks; shows stock, estimated usage and usage/minute. Both selections **Off** disables potion sampling and hides the readout.
 - **Potion costs:** estimated spending and spending/hour from bundled NPC reference prices or your own unit prices. This is separate from the main mesos/hour number.
 - **Local history:** farming sessions, map/level/party information and notes stored on your computer.
 - **Readable UI:** full/compact layouts, light/dark themes, adjustable size and transparency, hotkeys, and custom colors—including separate colored potion cards. Set Transparency to **0%** for maximum readability.
@@ -49,6 +54,6 @@ Moving the inventory may briefly interrupt readings. Keep it inside the game win
 
 ## Source and development
 
-Source, test fixtures and required licenses are included in the repository and the portable ZIP. Install requirements.txt in an isolated Python environment to run from source; requirements-build.txt and build.py support Windows packaging. The RC3 native build uses tools/prepare_windows_review.py with Python3.13.17 and requirements-build.txt. package_preview.py is retained only as a historical Python3.10 archive inspection/repackaging utility, not the RC3 build path. User data, local verification output, build artifacts and credentials must never be committed.
+Source, test fixtures and required licenses are included in the repository and the portable ZIP. Install requirements.txt in an isolated Python environment to run from source; requirements-build.txt and build.py support Windows packaging. The native build uses tools/prepare_windows_review.py with Python3.13.17 and requirements-build.txt. package_preview.py is retained only as a historical Python3.10 archive inspection/repackaging utility, not the current build path. User data, local verification output, build artifacts and credentials must never be committed.
 
 The Windows review workflow is provided as an inactive template in `docs/windows-review.yml.example`. It is not installed as GitHub Actions automation in this sharing repository.

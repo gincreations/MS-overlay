@@ -17,7 +17,7 @@ on:
       review_tag:
         description: 'Published or draft candidate tag for bounded trace'
         type: string
-        default: 'v0.1.18-rc3'
+        default: 'v0.1.19-rc1'
       zip_sha256:
         description: 'Expected exact portable ZIP SHA256'
         type: string
@@ -25,7 +25,7 @@ on:
       exe_sha256:
         description: 'Expected exact application EXE SHA256'
         type: string
-        default: '3792cca83ba0d98874f7e37f9589e577645011fa746b5f55ad103ab045e71676'
+        default: '1a9eada8519e582ce14fdf1f9530934392e243a02eccc97db56def746e6356f3'
 permissions:
   contents: read
   actions: read
@@ -61,6 +61,8 @@ jobs:
         run: python tools/run_windows_tests.py test_dialog_layout
       - name: Regression - test_auto_potion_ui
         run: python tools/run_windows_tests.py test_auto_potion_ui
+      - name: Regression - test_hotbar
+        run: python tools/run_windows_tests.py test_hotbar
       - name: Regression - test_auto_potions
         run: python tools/run_windows_tests.py test_auto_potions
       - name: Regression - test_estimate_ui
@@ -139,7 +141,7 @@ jobs:
       - name: Scan final portable ZIP without modifying it
         shell: pwsh
         run: |
-          $zip = (Resolve-Path 'verification/windows-review/download/Maple-Private-Overlay-0.1.18-rc3-portable.zip').Path
+          $zip = (Resolve-Path 'verification/windows-review/download/Maple-Private-Overlay-0.1.19-rc1-portable.zip').Path
           $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash
           $scanner = Join-Path $env:ProgramFiles 'Windows Defender/MpCmdRun.exe'
           & $scanner -Scan -ScanType 3 -File $zip -DisableRemediation

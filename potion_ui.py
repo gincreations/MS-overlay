@@ -145,7 +145,7 @@ class PotionPanel(Window):
         body=tk.Frame(self.scroll.body,bg=BG);body.pack(padx=px(18),pady=px(16))
         wrap=px(420)
         tk.Label(body,text="Potions & costs",bg=BG,fg=FG,font=th.font("bold",18)).pack(anchor="w")
-        tk.Label(body,text="Optional: leave both items Off to disable potion tracking. When enabled, keep the inventory Use tab visible.",
+        tk.Label(body,text="Optional: both Off disables tracking. Reads hotbar totals first; falls back to the visible inventory Use tab. Never combines both sources.",
                  bg=BG,fg=DIM,font=th.font("regular",11),wraplength=wrap,justify="left").pack(anchor="w",pady=(px(4),px(10)))
         style=ttk.Style(self)
         style.configure("Potion.TCombobox",fieldbackground=RAISED,background=RAISED,foreground=FG,

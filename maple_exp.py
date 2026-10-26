@@ -77,7 +77,7 @@ cv2.setNumThreads(1)
 # Use OpenCV's standard implementation; recognition thresholds are unchanged.
 cv2.ipp.setUseIPP(False)
 
-VERSION = "0.1.18-rc3"
+VERSION = "0.1.19-rc1"
 WINDOW_TITLE = "Maple Private Overlay"    # the version is shown in Settings
 OLD_TITLES = ()               # what versions before 0.9.3 were called
 
@@ -3471,7 +3471,7 @@ class App:
         self.cfg["potion_items"] = [getattr(slot,"item_id",None) for slot in self.potion_slots]
         save_config(self.cfg)  # names and catalog ids only; never captured pixels
         self._configure_potions()
-        self.status.set("Item selected. Open the inventory Use tab and click back into the game.")
+        self.status.set("Item selected. Keep it on the hotbar or open the inventory Use tab, then click back into the game.")
         self._update_display()
 
     def remove_potion(self, index):
@@ -3509,6 +3509,8 @@ class App:
                 usage.gap(why)
             else:
                 usage.observe(value, now)
+                if why == "Hotbar total" and usage.status == "Tracking visible stack":
+                    usage.status = "Tracking hotbar total"
 
     def potion_text(self, index, details=False):
         slot, usage = self.potion_slots[index], self.potion_usage[index]

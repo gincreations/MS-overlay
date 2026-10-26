@@ -1,8 +1,8 @@
-"""Offline, selected-item recognition within a freshly read inventory.
+"""Offline, selected-item recognition in verified inventory and hotbar layouts.
 
 Only bundled reference artwork is loaded. No screen pixels are written to disk.
-An inventory money-field anchor and a repeated slot grid are both required: a
-matching icon on the hotbar, ground or minimap is not sufficient.
+Inventory requires a money-field anchor and repeated slot grid. Hotbar detection
+independently verifies a two-row/four-column key-label panel. Isolated icons do not qualify.
 """
 import json
 from collections import OrderedDict
@@ -230,3 +230,148 @@ class CountFont:
             if x>=w-2:
                 return int(''.join(out))
         return None
+
+
+class HotbarDetector:
+    """Recognize the classic 4x2 quickslot panel, not an arbitrary group of icons.
+
+    Layout candidates come from button geometry; bundled key-label artwork then
+    verifies/aligns each candidate. Counts and changing icons are never anchors.
+    """
+    def __init__(self, folder, detector):
+        self.detector = detector
+        self.labels = cv2.imread(str(Path(folder) / 'hotbar-labels.png'), cv2.IMREAD_UNCHANGED)
+        if self.labels is None or self.labels.shape[2] != 4:
+            raise ValueError('Missing hotbar key-label reference')
+        self.cache = OrderedDict()
+        self.templates = {}
+
+    def cells(self, frame):
+        # Geometry search only: full-resolution pixels remain the recognition source.
+        ratio = 1.0  # Preserve small key-label geometry on high-resolution displays.
+        small = cv2.resize(frame, None, fx=ratio, fy=ratio, interpolation=cv2.INTER_AREA) if ratio < 1 else frame
+        hsv = cv2.cvtColor(small, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, np.array([0, 0, 170]), np.array([180, 65, 255]))
+        contours, _ = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        boxes = [cv2.boundingRect(c) for c in contours if cv2.contourArea(c) >= 100]
+        boxes = [b for b in boxes if 16 <= b[2] <= 160 and .65 < b[2]/b[3] < 1.5]
+        if len(boxes) > 600:
+            return []
+        proposals = set()
+        for a in boxes:
+            row = [b for b in boxes if abs(b[1]-a[1]) < a[2]*.14 and .80 < b[2]/a[2] < 1.2]
+            for b in row:
+                pitch = b[0]-a[0]
+                if not 1.05*a[2] < pitch < 1.5*a[2]:
+                    continue
+                # A large icon can split one white button contour. Require
+                # three buttons per row, then let all eight labels verify it.
+                for first_col in (0,1):
+                    start=a[0]-first_col*pitch
+                    top=[]
+                    for col in range(4):
+                        found=[c for c in row if abs(c[0]-start-col*pitch)<pitch*.1]
+                        if found:top.append((col,min(found,key=lambda c:abs(c[0]-start-col*pitch))))
+                    if len(top)<3:continue
+                    lower=[c for c in boxes if .8*pitch<c[1]-a[1]<1.15*pitch
+                           and any(abs(c[0]-start-col*pitch)<pitch*.1 for col in range(4))
+                           and .75<c[2]/a[2]<1.25]
+                    if len({round((c[0]-start)/pitch) for c in lower})<3:continue
+                    px=float(np.median([(top[i+1][1][0]-top[i][1][0])/(top[i+1][0]-top[i][0]) for i in range(len(top)-1)]))/ratio
+                    py=(float(np.median([c[1] for c in lower]))-float(np.median([c[1] for _,c in top])))/ratio
+                    if not .90<py/px<1.05:continue
+                    ox=float(np.median([c[0]-col*px*ratio for col,c in top]))/ratio-3*px/49
+                    oy=float(np.median([c[1] for _,c in top]))/ratio-3*py/48
+                    proposals.add((round(ox),round(oy),round(px),round(py)))
+        matches = []
+        grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        for x,y,px,py in sorted(proposals):
+            w,h = 4*px,2*py
+            t = cv2.resize(self.labels, (w,h), interpolation=cv2.INTER_LINEAR)
+            tm = (t[:,:,3] > 240).astype(np.uint8)*255
+            tg = cv2.cvtColor(t[:,:,:3], cv2.COLOR_BGR2GRAY)
+            margin = max(3,round(px*.08))
+            x0,y0 = max(0,x-margin),max(0,y-margin)
+            x1,y1 = min(grey.shape[1],x+w+margin),min(grey.shape[0],y+h+margin)
+            crop = grey[y0:y1,x0:x1]
+            if crop.shape[0] < h or crop.shape[1] < w: continue
+            scores = cv2.matchTemplate(crop,tg,cv2.TM_SQDIFF_NORMED,mask=tm)
+            scores = np.nan_to_num(scores,nan=9,posinf=9,neginf=9)
+            value,_,loc,_ = cv2.minMaxLoc(scores)
+            xx,yy = loc
+            patch = crop[yy:yy+h,xx:xx+w]
+            corr = float(cv2.matchTemplate(patch,tg,cv2.TM_CCOEFF_NORMED,mask=tm)[0,0])
+            if value <= .10 and np.isfinite(corr) and corr >= .78:
+                matches.append((value,x0+xx,y0+yy,px,py))
+        if not matches: return []
+        matches.sort()
+        _,x,y,px,py = matches[0]
+        if any(abs(xx-x)>px/2 or abs(yy-y)>py/2 for _,xx,yy,_,_ in matches[1:]):
+            return []  # multiple distinct panels, do not guess
+        return [(x+c*px,y+r*py,px,py) for r in range(2) for c in range(4)]
+
+    def identify(self, cell):
+        h,w = cell.shape[:2]
+        lo,hi = round(h*.38),round(h*.60)
+        band = cell[lo:hi]
+        key = (cell.shape,band.tobytes())
+        if key in self.cache:
+            self.cache.move_to_end(key)
+            return self.cache[key]
+        result = self._identify(cell,lo,hi)
+        self.cache[key] = result
+        if len(self.cache)>128: self.cache.popitem(last=False)
+        return result
+
+    def _identify(self, cell, lo, hi):
+        h,w = cell.shape[:2]
+        if np.std(cv2.cvtColor(cell[lo:hi],cv2.COLOR_BGR2GRAY)) < 15:
+            return None
+        scores = []
+        for item,icon in self.detector.icons.items():
+            key = (item,w,h,lo,hi)
+            if key not in self.templates:
+                choices=[]
+                for scale in np.linspace(w/35*.90,w/35*1.07,10):
+                    t=cv2.resize(icon,None,fx=scale,fy=scale,interpolation=cv2.INTER_LINEAR)
+                    th,tw=t.shape[:2]
+                    if th>h or tw>w: continue
+                    origin=self.detector.catalog[item]['origin']
+                    expected_y=(32-origin[1])*scale
+                    margin=max(2,round(w*.065))
+                    for yy in range(max(0,round(expected_y)-margin),min(h-th,round(expected_y)+margin)+1):
+                        first,last=max(0,lo-yy),min(th,hi-yy)
+                        if last<=first:continue
+                        band=t[first:last]
+                        mask=(band[:,:,3]>240).astype(np.uint8)*255
+                        if np.count_nonzero(mask) >= max(25,round(w*w*.018)):
+                            choices.append((band[:,:,:3].copy(),mask,yy+first))
+                self.templates[key]=choices
+                if len(self.templates)>128:self.templates.clear();self.templates[key]=choices
+            best=1.0
+            for t,mask,yy in self.templates[key]:
+                th,tw=t.shape[:2]
+                region=cell[yy:yy+th]
+                result=cv2.matchTemplate(region,t,cv2.TM_SQDIFF_NORMED,mask=mask)
+                result=np.nan_to_num(result,nan=9,posinf=9,neginf=9)
+                value,_,loc,_=cv2.minMaxLoc(result)
+                if value >= min(best,.10):continue
+                xx=loc[0];patch=region[:,xx:xx+tw]
+                corr=float(cv2.matchTemplate(patch,t,cv2.TM_CCOEFF_NORMED,mask=mask)[0,0])
+                if np.isfinite(corr) and corr>=.70:best=value
+            scores.append((best,item))
+        scores.sort()
+        if scores[0][0]>.10 or scores[1][0]-scores[0][0]<.025:return None
+        return scores[0][1]
+
+    def samples(self, frame, selected):
+        found={s.item_id:[] for s in selected}
+        cells=self.cells(frame)
+        for x,y,w,h in cells:
+            cell=frame[y:y+h,x:x+w]
+            item=self.identify(cell)
+            if item in found:
+                # The label band is excluded; include the leading digit at the
+                # panel's slot edge, not at the inset white button boundary.
+                found[item].append(((x,y,w,h),cell[round(h*.53):,:round(w*.96)].copy()))
+        return [(found[s.item_id], 'Hotbar not recognized' if not cells else 'Selected item absent or unreadable on hotbar') for s in selected]
